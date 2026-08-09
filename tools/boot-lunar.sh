@@ -156,26 +156,34 @@ if [ ! -s "$LOG" ]; then
     echo "[runtime] INFRA: no log was harvested."
     exit 3
 fi
+if [ "$lb_launched" -eq 0 ]; then
+    echo "[runtime] INFRA: LiquidBounce never launched, so the run says nothing about compatibility."
+    exit 3
+fi
+# A mod that was asked for but never loaded would leave the run looking like a plain one.
+# Fabric reports the mod id from its manifest, which is not the jar's file name.
+if [ -n "$EXTRA_MOD" ]; then
+    mod_id="$(unzip -p "$EXTRA_MOD" fabric.mod.json 2>/dev/null \
+        | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])' 2>/dev/null)"
+    if [ -n "$mod_id" ] && ! grep -qa "$mod_id" "$LOG"; then
+        echo "[runtime] INFRA: $mod_id was staged but never appears in the log."
+        exit 3
+    fi
+fi
+
+# Fail on real LiquidBounce-side breakage. Checked before the boot guard on purpose: a mixin
+# Ichor rejects takes the boot down with it, and that is a verdict, not an environment problem.
+if [ "$lb_launched" -eq 0 ] || [ "$mixin_fail" -gt 0 ] || [ "$lb_fatal" -gt 0 ] || [ "$nosuchfield" -gt 0 ]; then
+    echo "[runtime] FAIL: LiquidBounce broke on Lunar during init (see report)."
+    exit 1
+fi
 # LiquidBounce launches from a mixin inside Minecraft's constructor, so it starting does not
 # mean the game booted. A run that died there never reached the code any of this is about.
 if grep -qaE 'Failed to boot Minecraft|UnsatisfiedLinkError' "$LOG"; then
     echo "[runtime] INFRA: Minecraft did not boot in this environment."
     exit 3
 fi
-if [ "$lb_launched" -eq 0 ]; then
-    echo "[runtime] INFRA: LiquidBounce never launched, so the run says nothing about compatibility."
-    exit 3
-fi
-# A mod that was asked for but never loaded would leave the run looking like a plain one.
-if [ -n "$EXTRA_MOD" ] && ! grep -qa "$(basename "${EXTRA_MOD%.jar}")" "$LOG"; then
-    echo "[runtime] INFRA: $(basename "$EXTRA_MOD") was staged but never mentioned in the log."
-    exit 3
-fi
-# Fail on real LiquidBounce-side breakage.
-if [ "$lb_launched" -eq 0 ] || [ "$mixin_fail" -gt 0 ] || [ "$lb_fatal" -gt 0 ] || [ "$nosuchfield" -gt 0 ]; then
-    echo "[runtime] FAIL: LiquidBounce broke on Lunar during init (see report)."
-    exit 1
-fi
+
 if [ "$lunar_init" -eq 0 ]; then
     echo "[runtime] OK, but weakly: LiquidBounce started with no mixin or linkage failure, though Lunar"
     echo "[runtime]     never finished init here, so paths past early startup were never reached."
