@@ -34,6 +34,22 @@ redirects match, and every injector is optional, so the mod does nothing rather 
 
 The jar lands in `build/libs/`.
 
+## Keeping up with LiquidBounce
+
+`covered-members.txt` lists the okhttp and okio members LiquidBounce binds that Lunar's release
+does not declare, and that this mod handles. A daily action builds LiquidBounce from nextgen,
+fetches the okhttp Lunar serves that day, resolves every member the client and its bundled
+libraries reference, and fails if one turns up outside that list, which means LiquidBounce
+started calling something new and needs a matching redirect here.
+
+Run it locally with:
+
+```
+./tools/fetch-lunar-okhttp.sh 26.2 lunar-okhttp.jar
+python3 tools/check_okhttp_compat.py --client <liquidbounce.jar> \
+    --host lunar-okhttp.jar --covered covered-members.txt
+```
+
 ## Scope
 
 Written against LiquidBounce nextgen and Lunar's 26.2 build. It covers the okhttp calls

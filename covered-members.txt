@@ -1,0 +1,11 @@
+# Members LiquidBounce binds that Lunar okhttp does not declare, and this mod handles.
+# A member appearing outside this list is one the mod does not cover yet.
+okhttp3/Headers.CompanionLokhttp3/Headers$Companion;
+okhttp3/Headers.EMPTYLokhttp3/Headers;
+okhttp3/HttpUrl.CompanionLokhttp3/HttpUrl$Companion;
+okhttp3/MediaType.CompanionLokhttp3/MediaType$Companion;
+okhttp3/MultipartBody$Builder.<init>(Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+okhttp3/MultipartBody$Part.CompanionLokhttp3/MultipartBody$Part$Companion;
+okhttp3/RequestBody.CompanionLokhttp3/RequestBody$Companion;
+okio/Buffer.copy()Lokio/Buffer;
+okio/Okio.sink$default(Ljava/io/File;ZILjava/lang/Object;)Lokio/Sink;

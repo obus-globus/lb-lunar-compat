@@ -77,4 +77,27 @@ public abstract class MixinLiquidBounceCompanions {
     private static MultipartBody\u0024Part\u0024Companion lbcompat$multipartPart() {
         return new MultipartBody\u0024Part\u0024Companion();
     }
+
+    /** The file sink okio only grew a two argument form of after the release a host may bundle. */
+    @Redirect(
+        method = "*",
+        at = @At(value = "INVOKE",
+                 target = "Lokio/Okio;sink$default(Ljava/io/File;ZILjava/lang/Object;)Lokio/Sink;"),
+        require = 0
+    )
+    private static okio.Sink lbcompat$sink(java.io.File file, boolean append, int flags, Object marker)
+            throws java.io.FileNotFoundException {
+        return okio.Okio.sink(new java.io.FileOutputStream(file, append));
+    }
+
+    /** The boundary defaulting constructor kotlin emits, which the older release does not declare. */
+    @Redirect(
+        method = "*",
+        at = @At(value = "NEW", target = "(Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)"
+                 + "Lokhttp3/MultipartBody$Builder;"),
+        require = 0
+    )
+    private static MultipartBody.Builder lbcompat$multipartBuilder(String boundary, int flags, Object marker) {
+        return boundary == null ? new MultipartBody.Builder() : new MultipartBody.Builder(boundary);
+    }
 }
