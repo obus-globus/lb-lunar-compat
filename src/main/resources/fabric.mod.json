@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "lb_lunar_compat",
+  "version": "0.1.0",
+  "name": "LiquidBounce Lunar okhttp compat",
+  "environment": "client",
+  "mixins": [
+    "lbcompat.mixins.json",
+    "lbcompat-okhttp.mixins.json"
+  ],
+  "depends": {
+    "minecraft": "*"
+  }
+}

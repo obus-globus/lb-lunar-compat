@@ -1,0 +1,25 @@
+package lbcompat.mixin;
+
+import okio.Buffer;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
+
+/**
+ * Copies the buffer authlib writes a json body from, through a method every okio declares.
+ * {@code Buffer.copy} arrived in okio 2.0, while {@code clone} exists in both.
+ */
+@Pseudo
+@Mixin(targets = "net.ccbluex.liquidbounce.authlib.utils.HttpUtilsKt$asRequestBody$1", remap = false)
+public abstract class MixinAuthlibRequestBody {
+
+    @Redirect(
+        method = "writeTo(Lokio/BufferedSink;)V",
+        at = @At(value = "INVOKE", target = "Lokio/Buffer;copy()Lokio/Buffer;"),
+        require = 0
+    )
+    private Buffer lbcompat$copyBuffer(Buffer buffer) {
+        return buffer.clone();
+    }
+}

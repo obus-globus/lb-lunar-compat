@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "okhttp3",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "MixinLiquidBounceCompanions"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

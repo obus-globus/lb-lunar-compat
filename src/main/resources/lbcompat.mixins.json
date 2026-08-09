@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "lbcompat.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "MixinAuthlibHttpUtils",
+    "MixinAuthlibRequestBody"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
