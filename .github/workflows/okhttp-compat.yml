@@ -42,7 +42,7 @@ jobs:
 
       - name: Build LiquidBounce
         working-directory: liquidbounce
-        run: ./gradlew remapJar --no-daemon
+        run: ./gradlew jar --no-daemon
 
       - name: Fetch the okhttp Lunar bundles
         id: lunar
