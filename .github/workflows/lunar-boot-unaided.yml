@@ -1,10 +1,10 @@
-# Boots Lunar with a current LiquidBounce and this mod, and reads the init log.
+# Boots Lunar with a current LiquidBounce and nothing else, to show the breakage this mod
+# exists for is still there.
 #
-# The static check cannot see whether a redirect binds: an injector Ichor rejects, or one whose
-# target moved, only shows up when mixins are applied. Both have happened, so this runs the real
-# thing. No account is needed; Lunar's own overlay dies without a GPU shortly after init, which
-# is a Lunar limitation, so only init is graded.
-name: lunar boot
+# This is the control for the run with the mod: if LiquidBounce stops failing here, either
+# LiquidBounce or Lunar has changed and the mod may no longer be needed, which is worth
+# finding out before the other job's pass is read as meaning anything.
+name: lunar boot, without the mod
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ on:
         required: false
         default: '26.2'
   schedule:
-    - cron: '30 7 * * *'
+    - cron: '15 7 * * *'
 
 permissions:
   contents: read
@@ -34,9 +34,6 @@ jobs:
       - name: Install a display for the headless run
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends xvfb
 
-      - name: Build the mod
-        run: ./gradlew jar --no-daemon
-
       - name: Check out LiquidBounce
         uses: actions/checkout@v5
         with:
@@ -49,16 +46,25 @@ jobs:
         working-directory: liquidbounce
         run: ./gradlew jar --no-daemon
 
-      - name: Boot Lunar with both
+      - name: Boot Lunar with LiquidBounce alone
         shell: bash
         run: |
           jar=$(ls -t liquidbounce/build/libs/liquidbounce-*.jar | grep -v sources | head -1)
           [ -n "$jar" ] || { echo "no LiquidBounce jar was built"; exit 2; }
-          ./tools/boot-lunar.sh "${{ inputs.mc_version || '26.2' }}" "$jar" build/libs/lb-lunar-compat.jar
+          set +e
+          ./tools/boot-lunar.sh "${{ inputs.mc_version || '26.2' }}" "$jar"
+          code=$?
+          set -e
+          case $code in
+            1) echo "LiquidBounce still breaks on Lunar unaided, as expected." ;;
+            0) echo "::warning::LiquidBounce no longer breaks on Lunar unaided; this mod may be unnecessary."
+               exit 1 ;;
+            *) echo "the run did not produce a verdict (exit $code)"; exit $code ;;
+          esac
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: lunar-boot-report
+          name: lunar-boot-unaided-report
           path: lunar-runtime-compat.txt
           if-no-files-found: warn

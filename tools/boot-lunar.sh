@@ -158,5 +158,9 @@ if [ "$lb_launched" -eq 0 ] || [ "$mixin_fail" -gt 0 ] || [ "$lb_fatal" -gt 0 ] 
     echo "[runtime] FAIL: LiquidBounce broke on Lunar during init (see report)."
     exit 1
 fi
-echo "[runtime] OK: LiquidBounce started and no mixin or linkage failure appeared. Lunar's own"
-echo "[runtime]     overlay dies before init finishes without a GPU, so nothing past init was exercised."
+if [ "$lunar_init" -eq 0 ]; then
+    echo "[runtime] OK, but weakly: LiquidBounce started with no mixin or linkage failure, though Lunar"
+    echo "[runtime]     never finished init here, so paths past early startup were never reached."
+else
+    echo "[runtime] OK: LiquidBounce started and ran through Lunar's init with no mixin or linkage failure."
+fi
