@@ -24,4 +24,10 @@ public final class RequestBody\u0024Companion {
     public RequestBody asRequestBody(File file, MediaType contentType) {
         return RequestBody.create(contentType, file);
     }
+
+    /** The default argument bridge kotlin emits for {@code create(content, type)}. */
+    public static RequestBody create$default(RequestBody\u0024Companion self, String content,
+                                             MediaType contentType, int mask, Object marker) {
+        return RequestBody.create((mask & 2) != 0 ? null : contentType, content);
+    }
 }

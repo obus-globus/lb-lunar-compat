@@ -23,8 +23,11 @@ The bundled `mc-authlib` is patched the same way. Its `HttpUtils` reads companio
 initialiser, which is why account login fails even once the client starts; its constants are
 rebuilt from members every release declares, and the two other members it needs are redirected.
 
-Nothing is shipped that overwrites an okhttp class. On a host with a current okhttp none of the
-redirects match, and every injector is optional, so the mod does nothing rather than failing.
+No okhttp class is overwritten. The redirects rewrite LiquidBounce's own call sites, so they
+apply on any host, and the companions forward to factories a current okhttp declares too. That
+keeps the calls correct there, but the mod is only tested against Lunar, and on a host carrying
+its own companion classes which one wins is a load order question this does not settle. Install
+it for Lunar.
 
 ## Building
 

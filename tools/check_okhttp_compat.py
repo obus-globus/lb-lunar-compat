@@ -156,10 +156,15 @@ def main():
     if not host:
         print(f"no okhttp or okio classes in {args.host}", file=sys.stderr)
         return 2
-    covered = set()
+    covered = {}
     if args.covered:
         with open(args.covered) as fh:
-            covered = {ln.split("#")[0].strip() for ln in fh if ln.split("#")[0].strip()}
+            for line in fh:
+                line = line.split("#")[0].strip()
+                if not line:
+                    continue
+                member, _, users = line.partition(" <- ")
+                covered[member.strip()] = {u.strip() for u in users.split(",") if u.strip()}
     refs = collect(args.client)
     provided = set(load(args.client, PKGS))
 
@@ -169,7 +174,14 @@ def main():
             continue  # the client ships this class itself
         if resolves(owner, (name, desc), host, set()):
             continue
-        if f"{owner}.{name}{desc}" in covered:
+        key = f"{owner}.{name}{desc}"
+        if key in covered:
+            # Handled, but only for the classes the mixin actually targets. A new referencing
+            # class reaches the same member through a redirect that does not apply to it.
+            stray = sorted(set(users) - covered[key])
+            if not stray:
+                continue
+            missing.append((owner, name, desc, stray))
             continue
         missing.append((owner, name, desc, sorted(set(users))))
 
@@ -182,7 +194,7 @@ def main():
     print(f"\n{len(missing)} member(s) do not resolve:\n")
     for owner, name, desc, users in missing:
         print(f"  {owner}.{name}{desc}")
-        for u in users[:3]:
+        for u in users:
             print(f"      {u}")
     return 1
 

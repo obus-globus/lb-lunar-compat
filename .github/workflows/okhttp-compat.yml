@@ -23,6 +23,7 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
 
@@ -41,15 +42,21 @@ jobs:
 
       - name: Build LiquidBounce
         working-directory: liquidbounce
-        run: ./gradlew jar --no-daemon
+        run: ./gradlew remapJar --no-daemon
 
       - name: Fetch the okhttp Lunar bundles
         id: lunar
         run: ./tools/fetch-lunar-okhttp.sh "${{ inputs.mc_version || '26.2' }}" lunar-okhttp.jar
 
       - name: Resolve LiquidBounce's okhttp calls against it
+        shell: bash
         run: |
           jar=$(ls -t liquidbounce/build/libs/liquidbounce-*.jar | grep -v sources | head -1)
+          [ -n "$jar" ] || { echo "no LiquidBounce jar was built"; exit 2; }
+          # The nested libraries carry a good part of the surface, so a jar without them would
+          # pass while saying nothing about authlib.
+          unzip -l "$jar" | grep -q 'META-INF/jars/mc-authlib' \
+            || { echo "$jar has no nested libraries, nothing to check"; exit 2; }
           echo "checking $jar"
           python3 tools/check_okhttp_compat.py \
             --client "$jar" \

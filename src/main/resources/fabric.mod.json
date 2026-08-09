@@ -10,5 +10,13 @@
   ],
   "depends": {
     "minecraft": "*"
+  },
+  "description": "Runs LiquidBounce on a host bundling an okhttp older than it builds against",
+  "authors": [
+    "obus-globus"
+  ],
+  "license": "Apache-2.0",
+  "contact": {
+    "sources": "https://github.com/obus-globus/lb-lunar-compat"
   }
 }

@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
         "net.ccbluex.liquidbounce.api.thirdparty.translator.providers.GoogleTranslateApiKt",
         "net.ccbluex.liquidbounce.api.services.marketplace.MarketplaceApi",
         "net.ccbluex.liquidbounce.features.module.modules.render.ModuleSkinChanger$Mode$File",
+        "net.ccbluex.liquidbounce.authlib.utils.HttpUtils",
     },
     remap = false
 )
