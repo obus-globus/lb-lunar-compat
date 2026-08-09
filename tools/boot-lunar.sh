@@ -112,7 +112,9 @@ kill -9 "$GPID" 2>/dev/null; wait "$GPID" 2>/dev/null
 mkdir -p "$(dirname "$REPORT")"
 lunar_init=$(grep -qa 'Finished Lunar initialization' "$LOG" && echo 1 || echo 0)
 lb_launched=$(grep -ac 'Launching LiquidBounce' "$LOG")
-mixin_fail=$(grep -acE 'InvalidInjectionException|Mixin apply failed|was not applied' "$LOG")
+# Mixin's own wording. InvalidInjectionException alone would never fire here: every injector
+# in the mod is optional, so a count violation is not raised.
+mixin_fail=$(grep -acE 'MixinApplyError|InvalidMixinException|InvalidInjectionException|InvalidAccessorException|FAILED during APPLY' "$LOG")
 # ErrorHandler.kt always logs "An error occurred!" (and, under CI=1, the "encountered an error" line too).
 lb_fatal=$(grep -acE 'An error occurred!|LiquidBounce Nextgen.*encountered an error' "$LOG")
 # Count only linkage errors attributable to LiquidBounce: a NoSuch*/NCDFE whose error block has a
@@ -149,8 +151,24 @@ shader_fail=$(grep -acE "Couldn't compile program for pipeline liquidbounce" "$L
 # Lunar not finishing init is an environment or provisioning failure, not an incompatibility.
 # LiquidBounce starting says nothing here: it launches from a mixin early in Minecraft's own
 # constructor, so a run that dies right after would otherwise be graded as a clean pass.
+# A log that was never written says nothing, and grading an empty one reads as a pass.
+if [ ! -s "$LOG" ]; then
+    echo "[runtime] INFRA: no log was harvested."
+    exit 3
+fi
+# LiquidBounce launches from a mixin inside Minecraft's constructor, so it starting does not
+# mean the game booted. A run that died there never reached the code any of this is about.
+if grep -qaE 'Failed to boot Minecraft|UnsatisfiedLinkError' "$LOG"; then
+    echo "[runtime] INFRA: Minecraft did not boot in this environment."
+    exit 3
+fi
 if [ "$lb_launched" -eq 0 ]; then
     echo "[runtime] INFRA: LiquidBounce never launched, so the run says nothing about compatibility."
+    exit 3
+fi
+# A mod that was asked for but never loaded would leave the run looking like a plain one.
+if [ -n "$EXTRA_MOD" ] && ! grep -qa "$(basename "${EXTRA_MOD%.jar}")" "$LOG"; then
+    echo "[runtime] INFRA: $(basename "$EXTRA_MOD") was staged but never mentioned in the log."
     exit 3
 fi
 # Fail on real LiquidBounce-side breakage.

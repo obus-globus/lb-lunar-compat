@@ -83,18 +83,23 @@ def _members(data):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--client", required=True, help="the LiquidBounce jar")
+    ap.add_argument("--covered", help="the covered members file, whose users must be targeted")
     ap.add_argument("sources", nargs="+", help="the mixin sources")
     args = ap.parse_args()
 
     present = classes_in(args.client)
     problems = []
+    all_targets = set()
     for path in args.sources:
         with open(path) as fh:
             text = fh.read()
         targets = []
         for block in MIXIN_TARGETS.findall(text):
             targets += [t for t in QUOTED.findall(block) if "." in t]
+        if not targets:
+            problems.append(f"{path}: no @Mixin target was parsed, so nothing was checked")
         for t in targets:
+            all_targets.add(t.replace(".", "/"))
             if t.replace(".", "/") not in present:
                 problems.append(f"{path}: @Mixin target is gone: {t}")
         # @At targets naming a class outside okhttp, i.e. one the client owns
@@ -107,6 +112,23 @@ def main():
         for t in targets:
             mark = "ok " if t.replace(".", "/") in present else "GONE"
             print(f"   {mark} {t}")
+
+    # The covered file records which classes reference each member the mod handles. A class
+    # listed there but not targeted by any mixin is one nothing redirects, so the member is
+    # only covered on paper.
+    if args.covered:
+        with open(args.covered) as fh:
+            for line in fh:
+                line = line.split("#")[0].strip()
+                if not line or " <- " not in line:
+                    continue
+                member, _, users = line.partition(" <- ")
+                for user in (u.strip() for u in users.split(",")):
+                    if user and user not in all_targets:
+                        problems.append(
+                            f"covered-members.txt: {member.strip()} is claimed for {user}, "
+                            f"which no mixin targets"
+                        )
 
     if problems:
         print("\n" + "\n".join(problems))

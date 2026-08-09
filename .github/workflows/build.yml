@@ -47,9 +47,17 @@ jobs:
           # Shipping an okhttp class of its own would shadow the host's and defeat the point.
           # The mixin sits in that package too, because a companion type can only be named from
           # inside it, so it is not a shadow.
-          shipped=$(unzip -l "$jar" \
-            | awk '$4 ~ /^okhttp3\/[A-Za-z]+\.class$/ && $4 !~ /\/Mixin[A-Za-z]*\.class$/ {print $4}')
+          # Subpackages and inner classes count too, so match the whole namespace and allow
+          # only the companions and the mixin that has to sit beside them.
+          shipped=$(unzip -l "$jar" | awk '$4 ~ /^(okhttp3|okio)\// && $4 ~ /\.class$/ {print $4}' \
+            | grep -vE '^okhttp3/(Headers|HttpUrl|MediaType|RequestBody|MultipartBody\$Part)\$Companion\.class$' \
+            | grep -vE '^okhttp3/MixinLiquidBounceCompanions\.class$' || true)
           [ -z "$shipped" ] || { echo "would shadow the host's okhttp: $shipped"; exit 1; }
+
+          for cls in lbcompat/mixin/MixinAuthlibHttpUtils.class \
+                     lbcompat/mixin/MixinAuthlibRequestBody.class; do
+            unzip -l "$jar" | grep -qF "$cls" || { echo "missing $cls"; exit 1; }
+          done
 
           for cfg in fabric.mod.json lbcompat.mixins.json lbcompat-okhttp.mixins.json; do
             unzip -l "$jar" | grep -qF "$cfg" || { echo "missing $cfg"; exit 1; }
