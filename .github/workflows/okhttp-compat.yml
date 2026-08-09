@@ -32,6 +32,13 @@ jobs:
           distribution: temurin
           java-version: '25'
 
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Lint the checks
+        run: uv run ruff check tools/
+
       - name: Check out LiquidBounce
         uses: actions/checkout@v5
         with:

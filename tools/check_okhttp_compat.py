@@ -5,7 +5,10 @@ Reads every class LiquidBounce ships, including its nested jar-in-jar libraries,
 okhttp and okio members they reference, and resolves each against the okhttp a host bundles.
 A member missing there is what throws NoSuchFieldError or NoSuchMethodError at runtime.
 """
-import argparse, struct, sys, zipfile
+import argparse
+import struct
+import sys
+import zipfile
 from collections import defaultdict
 
 PKGS = ("okhttp3/", "okio/")
@@ -40,7 +43,9 @@ def _pool(data):
 def references(data):
     """okhttp/okio members this class references, as (owner, name, descriptor)."""
     pool, _ = _pool(data)
-    utf = lambda i: pool[i][1] if pool.get(i, (None,))[0] == "utf" else None
+    def utf(i):
+        return pool[i][1] if pool.get(i, (None,))[0] == "utf" else None
+
     out = set()
     for tag, val in pool.values():
         if tag in (9, 10, 11) and isinstance(val, tuple):
@@ -56,8 +61,12 @@ def references(data):
 def declared(data):
     """(name, descriptor) of every field and method a class declares, plus its supertypes."""
     pool, off = _pool(data)
-    utf = lambda i: pool[i][1] if pool.get(i, (None,))[0] == "utf" else None
-    cls = lambda i: utf(pool[i][1]) if pool.get(i, (None,))[0] == 7 else None
+    def utf(i):
+        return pool[i][1] if pool.get(i, (None,))[0] == "utf" else None
+
+    def cls(i):
+        return utf(pool[i][1]) if pool.get(i, (None,))[0] == 7 else None
+
     p = off + 2
     this_name = cls(struct.unpack(">H", data[p:p + 2])[0]); p += 2
     supers = []

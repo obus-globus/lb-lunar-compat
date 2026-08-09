@@ -6,9 +6,15 @@ legitimately matches nothing in some of them. That also means a target LiquidBou
 stops being patched without any complaint, and the crash it was covering comes back. This
 reads the targets out of the mixin sources and checks each one still resolves.
 """
-import argparse, re, struct, sys, zipfile
+import argparse
+import re
+import struct
+import sys
+import zipfile
 
-MIXIN_TARGETS = re.compile(r'@Mixin\(\s*(?:value\s*=\s*)?(?:targets\s*=\s*)?\{?([^)]*?)\}?\s*(?:,\s*remap[^)]*)?\)', re.S)
+MIXIN_TARGETS = re.compile(
+    r'@Mixin\(\s*(?:value\s*=\s*)?(?:targets\s*=\s*)?\{?([^)]*?)\}?\s*(?:,\s*remap[^)]*)?\)', re.S
+)
 QUOTED = re.compile(r'"([^"]+)"')
 AT_FIELD = re.compile(r'target\s*=\s*"L([^;]+);([^:]+):([^"]+)"')
 AT_METHOD = re.compile(r'target\s*=\s*"L([^;]+);([^(]+)(\([^"]*)"')
@@ -83,7 +89,8 @@ def main():
     present = classes_in(args.client)
     problems = []
     for path in args.sources:
-        text = open(path).read()
+        with open(path) as fh:
+            text = fh.read()
         targets = []
         for block in MIXIN_TARGETS.findall(text):
             targets += [t for t in QUOTED.findall(block) if "." in t]
@@ -91,7 +98,7 @@ def main():
             if t.replace(".", "/") not in present:
                 problems.append(f"{path}: @Mixin target is gone: {t}")
         # @At targets naming a class outside okhttp, i.e. one the client owns
-        for owner, name, desc in AT_FIELD.findall(text):
+        for owner, _name, _desc in AT_FIELD.findall(text):
             if owner.startswith(("okhttp3/", "okio/")):
                 continue
             if owner not in present:

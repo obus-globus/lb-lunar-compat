@@ -1,0 +1,19 @@
+[project]
+name = "lb-lunar-compat-tools"
+version = "0.1.0"
+description = "Checks that keep the mod in step with LiquidBounce and the okhttp Lunar bundles"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = ["ruff>=0.14"]
+
+[tool.ruff]
+line-length = 110
+src = ["tools"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+# The class file parsers step an offset through a byte buffer, where reading a field and
+# advancing past it belong on one line.
+ignore = ["E702"]
