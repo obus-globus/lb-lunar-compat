@@ -63,6 +63,14 @@ jobs:
             --host lunar-okhttp.jar \
             --covered covered-members.txt | tee report.txt
 
+      - name: Check the mixin targets still exist
+        shell: bash
+        run: |
+          jar=$(ls -t liquidbounce/build/libs/liquidbounce-*.jar | grep -v sources | head -1)
+          python3 tools/check_mixin_targets.py --client "$jar" \
+            src/main/java/okhttp3/MixinLiquidBounceCompanions.java \
+            src/main/java/lbcompat/mixin/*.java | tee -a report.txt
+
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v4
