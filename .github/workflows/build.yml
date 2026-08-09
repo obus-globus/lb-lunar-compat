@@ -1,0 +1,64 @@
+# Builds the mod and checks the jar carries what it has to: the companion types LiquidBounce
+# reads, and no okhttp of its own.
+name: build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build
+        run: ./gradlew jar --no-daemon
+
+      - name: Check the jar
+        shell: bash
+        run: |
+          jar=build/libs/lb-lunar-compat.jar
+          [ -f "$jar" ] || { echo "no jar was built"; exit 1; }
+
+          # The companion types have to carry the exact names kotlin compiles to, or the reads
+          # this mod redirects would not resolve.
+          for want in 'okhttp3/Headers$Companion.class' \
+                      'okhttp3/HttpUrl$Companion.class' \
+                      'okhttp3/MediaType$Companion.class' \
+                      'okhttp3/RequestBody$Companion.class' \
+                      'okhttp3/MultipartBody$Part$Companion.class'; do
+            unzip -l "$jar" | grep -qF "$want" || { echo "missing $want"; exit 1; }
+          done
+
+          # Shipping an okhttp class of its own would shadow the host's and defeat the point.
+          # The mixin sits in that package too, because a companion type can only be named from
+          # inside it, so it is not a shadow.
+          shipped=$(unzip -l "$jar" \
+            | awk '$4 ~ /^okhttp3\/[A-Za-z]+\.class$/ && $4 !~ /\/Mixin[A-Za-z]*\.class$/ {print $4}')
+          [ -z "$shipped" ] || { echo "would shadow the host's okhttp: $shipped"; exit 1; }
+
+          for cfg in fabric.mod.json lbcompat.mixins.json lbcompat-okhttp.mixins.json; do
+            unzip -l "$jar" | grep -qF "$cfg" || { echo "missing $cfg"; exit 1; }
+          done
+          echo "jar looks right:"
+          unzip -l "$jar" | awk '$4 ~ /\.(class|json)$/ {print "  " $4}'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lb-lunar-compat
+          path: build/libs/lb-lunar-compat.jar
+          if-no-files-found: error
