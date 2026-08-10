@@ -57,6 +57,20 @@ python3 tools/check_okhttp_compat.py --client <liquidbounce.jar> \
     --host lunar-okhttp.jar --covered covered-members.txt
 ```
 
+## What it was checked against
+
+`tested-against.json` records the LiquidBounce build and the Lunar okhttp this was last
+exercised on, and the build stamps them into the jar manifest, so a downloaded jar answers the
+question on its own:
+
+```
+Tested-LiquidBounce: 0.39.1 (nextgen c86714198)
+Tested-Lunar: MC 26.2 master, okhttp 3.14.9
+```
+
+Tagging a commit `v0.1.0` builds it, checks the tag against the version in the jar, and
+publishes the jar with those lines in the release notes.
+
 ## Scope
 
 Written against LiquidBounce nextgen and Lunar's 26.2 build. It covers the okhttp calls

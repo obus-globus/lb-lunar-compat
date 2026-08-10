@@ -19,7 +19,25 @@ dependencies {
 
 java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
 
+version = "0.1.0"
+
+// What the mod was last checked against, so a downloaded jar can say so itself.
+val testedAgainst = groovy.json.JsonSlurper()
+    .parse(file("tested-against.json")) as Map<String, Any>
+
 tasks.jar {
     archiveBaseName = "lb-lunar-compat"
-    manifest { attributes("Implementation-Version" to project.version) }
+    manifest {
+        @Suppress("UNCHECKED_CAST")
+        val lb = testedAgainst["liquidbounce"] as Map<String, Any>
+        @Suppress("UNCHECKED_CAST")
+        val lunar = testedAgainst["lunar"] as Map<String, Any>
+        attributes(
+            "Implementation-Title" to "lb-lunar-compat",
+            "Implementation-Version" to project.version,
+            "Tested-LiquidBounce" to "${lb["version"]} (${lb["branch"]} ${lb["commit"]})",
+            "Tested-Lunar" to "MC ${lunar["mc_version"]} ${lunar["branch"]}, okhttp ${lunar["okhttp"]}",
+            "Tested-On" to testedAgainst["verified_on"].toString(),
+        )
+    }
 }

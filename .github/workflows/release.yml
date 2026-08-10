@@ -1,0 +1,58 @@
+# Publishes a build. Tag a commit and the jar lands on the release with what it was checked
+# against, so anyone downloading it can tell whether it still matches their LiquidBounce.
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build
+        run: ./gradlew jar --no-daemon
+
+      - name: Check the tag matches the version in the build
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          jar=$(ls build/libs/lb-lunar-compat-*.jar | head -1)
+          built=$(unzip -p "$jar" META-INF/MANIFEST.MF | awk -F': ' '/Implementation-Version/{print $2}' | tr -d '\r')
+          tag="${GITHUB_REF_NAME#v}"
+          [ "$built" = "$tag" ] || { echo "tag $tag does not match the built version $built"; exit 1; }
+
+      - name: Write the notes
+        shell: bash
+        run: |
+          jar=$(ls build/libs/lb-lunar-compat-*.jar | head -1)
+          {
+            echo "Drop the jar into the same mods folder as LiquidBounce. Nothing else is needed."
+            echo
+            echo "Checked against:"
+            echo
+            unzip -p "$jar" META-INF/MANIFEST.MF \
+              | grep -E '^Tested-' | sed 's/^/- /' | tr -d '\r'
+          } > notes.md
+          cat notes.md
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/libs/lb-lunar-compat-*.jar
+          body_path: notes.md
+          generate_release_notes: true

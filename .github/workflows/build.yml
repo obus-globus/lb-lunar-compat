@@ -31,8 +31,9 @@ jobs:
       - name: Check the jar
         shell: bash
         run: |
-          jar=build/libs/lb-lunar-compat.jar
-          [ -f "$jar" ] || { echo "no jar was built"; exit 1; }
+          jar=$(ls build/libs/lb-lunar-compat-*.jar 2>/dev/null | head -1)
+          [ -n "$jar" ] && [ -f "$jar" ] || { echo "no jar was built"; exit 1; }
+          echo "checking $jar"
 
           # The companion types have to carry the exact names kotlin compiles to, or the reads
           # this mod redirects would not resolve.
@@ -68,7 +69,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: lb-lunar-compat
-          path: build/libs/lb-lunar-compat.jar
+          path: build/libs/lb-lunar-compat-*.jar
           if-no-files-found: error
 
       - name: Say so in Discord
