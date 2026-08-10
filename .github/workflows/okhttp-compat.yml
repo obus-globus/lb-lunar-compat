@@ -93,3 +93,19 @@ jobs:
           name: okhttp-compat-report
           path: report.txt
           if-no-files-found: warn
+
+      - name: Say so in Discord
+        if: failure()
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        shell: bash
+        run: |
+          [ -n "$WEBHOOK" ] || { echo "no webhook configured, nothing to send"; exit 0; }
+          python3 - <<'PY' | curl -fsS -X POST -H 'Content-Type: application/json' -d @- "$WEBHOOK" > /dev/null
+          import json, os
+          print(json.dumps({"content":
+              f"**{os.environ['GITHUB_WORKFLOW']}** failed on "
+              f"{os.environ['GITHUB_REPOSITORY']}\n"
+              f"<https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/"
+              f"{os.environ['GITHUB_RUN_ID']}>"}))
+          PY
