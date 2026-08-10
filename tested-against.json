@@ -3,7 +3,7 @@
     "branch": "nextgen",
     "commit": "c86714198",
     "version": "0.39.1",
-    "note": "the build a Microsoft account and the client menu were exercised on"
+    "note": "the build the client menu and its api calls were exercised on"
   },
   "lunar": {
     "mc_version": "26.2",
