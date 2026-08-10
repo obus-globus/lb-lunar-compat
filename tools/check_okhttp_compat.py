@@ -181,22 +181,34 @@ def main():
     # Classes the client ships that the host does not have do load at runtime, and what they
     # call is as able to be missing as anything else. Collect their references separately: the
     # mod redirects the client's own call sites, not these, so they are reported not failed.
-    # Only the ones the client's own code enters through: a class nothing reaches cannot
-    # break anything, and listing every internal of a bundled okhttp buries the signal.
-    entered = {owner for owner, _n, _d in refs}
-    client_only = (provided - set(host)) & entered
-    orphan_refs = {}
+    # Start from the ones the client's own code enters through, then follow what those reach
+    # among the same set. A class further down the chain runs just as surely as the first, so
+    # stopping at one hop would leave the rest of the path unexamined.
+    only = provided - set(host)
+    bodies = {}
     with zipfile.ZipFile(args.client) as z:
         for name in z.namelist():
-            if name.endswith(".jar"):
-                import io
-                inner = io.BytesIO(z.read(name))
-                with zipfile.ZipFile(inner) as iz:
-                    for entry in iz.namelist():
-                        if entry.endswith(".class") and entry[:-6] in client_only:
-                            for ref in references(iz.read(entry)):
-                                if ref[0] in host and not resolves(ref[0], ref[1:], host, set()):
-                                    orphan_refs.setdefault(ref, []).append(entry[:-6])
+            if not name.endswith(".jar"):
+                continue
+            import io
+            with zipfile.ZipFile(io.BytesIO(z.read(name))) as iz:
+                for entry in iz.namelist():
+                    if entry.endswith(".class") and entry[:-6] in only:
+                        bodies[entry[:-6]] = references(iz.read(entry))
+
+    reached = {owner for owner, _n, _d in refs} & only
+    queue = list(reached)
+    while queue:
+        for owner, _n, _d in bodies.get(queue.pop(), ()):
+            if owner in only and owner not in reached:
+                reached.add(owner)
+                queue.append(owner)
+
+    orphan_refs = {}
+    for internal in sorted(reached):
+        for ref in bodies.get(internal, ()):
+            if ref[0] in host and not resolves(ref[0], ref[1:], host, set()):
+                orphan_refs.setdefault(ref, []).append(internal)
 
     missing = []
     for (owner, name, desc), users in sorted(refs.items()):
