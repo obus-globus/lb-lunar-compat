@@ -1,5 +1,14 @@
 # LiquidBounce Lunar okhttp compat
 
+[![build](https://github.com/obus-globus/lb-lunar-compat/actions/workflows/build.yml/badge.svg)](https://github.com/obus-globus/lb-lunar-compat/actions/workflows/build.yml)
+[![okhttp compatibility](https://github.com/obus-globus/lb-lunar-compat/actions/workflows/okhttp-compat.yml/badge.svg)](https://github.com/obus-globus/lb-lunar-compat/actions/workflows/okhttp-compat.yml)
+[![lunar boot, with the mod](https://github.com/obus-globus/lb-lunar-compat/actions/workflows/lunar-boot-with-mod.yml/badge.svg)](https://github.com/obus-globus/lb-lunar-compat/actions/workflows/lunar-boot-with-mod.yml)
+[![lunar boot, without the mod](https://github.com/obus-globus/lb-lunar-compat/actions/workflows/lunar-boot-unaided.yml/badge.svg)](https://github.com/obus-globus/lb-lunar-compat/actions/workflows/lunar-boot-unaided.yml)
+[![release](https://img.shields.io/github/v/release/obus-globus/lb-lunar-compat?label=release)](https://github.com/obus-globus/lb-lunar-compat/releases/latest)
+
+The last badge is inverted on purpose: it boots LiquidBounce without this mod and passes only
+while that still fails, since the badge above it means nothing once there is nothing left to fix.
+
 LiquidBounce does not start on Lunar Client. Lunar bundles okhttp 3.14.9, which predates
 okhttp's move to Kotlin in 4.0, and its copy wins on Lunar's shared classloader. LiquidBounce
 is built against okhttp 5, so its calls read companion fields that release does not declare:
