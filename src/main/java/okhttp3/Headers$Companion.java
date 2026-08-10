@@ -7,7 +7,7 @@ package okhttp3;
  * it. A pre-4.0 okhttp has neither, so this supplies the type and the reads are redirected here.
  * Each member forwards to the static factory that release does declare.
  */
-public final class Headers\u0024Companion {
+public final class Headers$Companion {
 
     public Headers of(String... namesAndValues) {
         return Headers.of(namesAndValues);
@@ -15,9 +15,5 @@ public final class Headers\u0024Companion {
 
     public Headers of(java.util.Map<String, String> headers) {
         return Headers.of(headers);
-    }
-
-    public Headers headersOf(String... namesAndValues) {
-        return Headers.of(namesAndValues);
     }
 }

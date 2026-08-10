@@ -5,8 +5,7 @@
   "name": "LiquidBounce Lunar okhttp compat",
   "environment": "client",
   "mixins": [
-    "lbcompat.mixins.json",
-    "lbcompat-okhttp.mixins.json"
+    "lbcompat.mixins.json"
   ],
   "depends": {
     "minecraft": "*"

@@ -3,12 +3,12 @@
     "branch": "nextgen",
     "commit": "c86714198",
     "version": "0.39.1",
-    "note": "the build the client menu and its api calls were exercised on"
+    "note": "booted headlessly to init; the redirected reads were resolved against Lunar's okhttp rather than executed"
   },
   "lunar": {
     "mc_version": "26.2",
     "branch": "master",
     "okhttp": "3.14.9"
   },
-  "verified_on": "2026-08-09"
+  "verified_on": "2026-08-10"
 }

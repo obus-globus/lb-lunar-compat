@@ -238,7 +238,7 @@ def main():
             for u in sorted(set(users))[:2]:
                 print(f"      {u}")
     if not missing:
-        print("\nEvery referenced member resolves against the host.")
+        print("\nEvery member the client's own classes reference resolves against the host.")
         return 0
     print(f"\n{len(missing)} member(s) do not resolve:\n")
     for owner, name, desc, users in missing:

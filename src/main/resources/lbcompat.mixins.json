@@ -4,7 +4,13 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "MixinAuthlibHttpUtils",
-    "MixinAuthlibRequestBody"
+    "MixinAuthlibRequestBody",
+    "MixinCompanionHeaders",
+    "MixinCompanionHttpUrl",
+    "MixinCompanionMediaType",
+    "MixinCompanionMultipartBodyPart",
+    "MixinCompanionRequestBody",
+    "MixinKotlinDefaults"
   ],
   "injectors": {
     "defaultRequire": 1
