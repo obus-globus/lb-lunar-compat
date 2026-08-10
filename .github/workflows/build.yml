@@ -66,6 +66,25 @@ jobs:
           echo "jar looks right:"
           unzip -l "$jar" | awk '$4 ~ /\.(class|json)$/ {print "  " $4}'
 
+      - name: Put what the jar carries on the run page
+        if: always()
+        shell: bash
+        run: |
+          jar=$(ls build/libs/lb-lunar-compat-*.jar 2>/dev/null | head -1)
+          {
+            echo "## The jar"
+            echo
+            if [ -n "$jar" ]; then
+              echo '```'
+              unzip -p "$jar" META-INF/MANIFEST.MF | grep -E '^(Implementation|Tested)-' | tr -d '\r'
+              echo
+              unzip -l "$jar" | awk '$4 ~ /\.(class|json)$/ {print $4}'
+              echo '```'
+            else
+              echo "No jar was built."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - uses: actions/upload-artifact@v4
         with:
           name: lb-lunar-compat

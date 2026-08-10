@@ -86,6 +86,22 @@ jobs:
             src/main/java/okhttp3/MixinLiquidBounceCompanions.java \
             src/main/java/lbcompat/mixin/*.java | tee -a report.txt
 
+      - name: Put the report on the run page
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## LiquidBounce against the okhttp Lunar bundles"
+            echo
+            if [ -s report.txt ]; then
+              echo '```'
+              cat report.txt
+              echo '```'
+            else
+              echo "The checks produced no report."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v4

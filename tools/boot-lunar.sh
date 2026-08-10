@@ -38,7 +38,8 @@ MC_VERSION="${1:-26.2}"
 LB_JAR="${2:?a LiquidBounce jar is required}"
 EXTRA_MOD="${3:-}"
 BRANCH="${LUNAR_BRANCH:-master}"
-REPORT="${REPORT:-lunar-runtime-compat.txt}"
+REPORT="${REPORT:-$ROOT/lunar-runtime-compat.txt}"
+case "$REPORT" in /*) ;; *) REPORT="$ROOT/$REPORT" ;; esac
 WORK="${LUNAR_WORK:-$(mktemp -d /tmp/lunar-run.XXXXXX)}"
 JAVA_BIN="${JAVA_BIN:-java}"
 

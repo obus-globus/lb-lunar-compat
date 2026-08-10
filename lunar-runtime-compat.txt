@@ -1,0 +1,15 @@
+LiquidBounce <-> Lunar Client runtime compatibility
+MC 26.2 | Lunar branch master | launcher 3.4.9
+Lunar commit: 4d9265778a5b9db60419b1dd398b17d9fa376c7e
+LiquidBounce jar: stock-lb.jar  |  fabric-language-kotlin: 1.13.12+kotlin.2.4.0
+
+Lunar reached init finish    : NO
+LiquidBounce loaded/launched : yes
+Mixin injection failures     : 0
+LiquidBounce fatal handler   : 0
+LiquidBounce linkage errors  : 0
+LiquidBounce shader failures : 0
+
+No LiquidBounce-side runtime incompatibilities detected.
+
+(A post-init crash in libWebOSR/Ultralight is Lunar's own headless-GL limitation, not counted.)

@@ -64,6 +64,23 @@ jobs:
             *) echo "the run did not produce a verdict (exit $code)"; exit $code ;;
           esac
 
+
+      - name: Put the report on the run page
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Lunar runtime"
+            echo
+            if [ -s lunar-runtime-compat.txt ]; then
+              echo '```'
+              cat lunar-runtime-compat.txt
+              echo '```'
+            else
+              echo "The run produced no report."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
