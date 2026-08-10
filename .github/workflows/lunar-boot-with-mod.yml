@@ -2,7 +2,9 @@
 #
 # The static check cannot see whether a redirect binds: an injector Ichor rejects, or one whose
 # target moved, only shows up when mixins are applied. Both have happened, so this runs the real
-# thing. Read alongside the run without the mod, which shows the crash is still there to fix.
+# thing. What it does not show is that the redirects fire: the reads they cover sit behind the
+# theme, which needs a GL context a runner does not have, so a run gets nowhere near them. Read
+# it as "the mixins apply and nothing blows up at load", and leave the rest to the static check.
 #
 # No account is needed. Lunar's own overlay dies without a GPU shortly after init, so a pass
 # means LiquidBounce started and no mixin or linkage failure appeared, not a clean session.

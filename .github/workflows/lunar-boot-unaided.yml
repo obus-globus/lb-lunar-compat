@@ -1,9 +1,13 @@
-# Boots Lunar with a current LiquidBounce and nothing else, to show the breakage this mod
-# exists for is still there.
+# Disabled. Booting LiquidBounce unaided was meant to show the breakage this mod exists for is
+# still there, so that the run with the mod means something. It cannot: the read that crashes
+# sits in the theme, which loads through MCEF, which needs a GL context a runner does not have.
+# The boot dies before that, so the job reported "no longer breaks" on runs that never reached
+# the code at all, and alarmed on its own flakiness.
 #
-# This is the control for the run with the mod: if LiquidBounce stops failing here, either
-# LiquidBounce or Lunar has changed and the mod may no longer be needed, which is worth
-# finding out before the other job's pass is read as meaning anything.
+# The static check covers the same ground and does not depend on getting anywhere at runtime:
+# it resolves the reads against the okhttp Lunar ships, whether or not they are ever executed.
+# Left here, dispatch only, for an environment that can boot far enough to be worth running.
+
 name: lunar boot, without the mod
 
 on:
@@ -13,8 +17,6 @@ on:
         description: 'Minecraft version'
         required: false
         default: '26.2'
-  schedule:
-    - cron: '15 7 * * *'
 
 permissions:
   contents: read
