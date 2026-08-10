@@ -81,6 +81,8 @@ jobs:
         run: |
           jar=$(ls -t liquidbounce/build/libs/liquidbounce-*.jar | grep -v sources | head -1)
           python3 tools/check_mixin_targets.py --client "$jar" --covered covered-members.txt \
+            --config src/main/resources/lbcompat.mixins.json \
+            --config src/main/resources/lbcompat-okhttp.mixins.json \
             src/main/java/okhttp3/MixinLiquidBounceCompanions.java \
             src/main/java/lbcompat/mixin/*.java | tee -a report.txt
 

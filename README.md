@@ -45,6 +45,10 @@ fetches the okhttp Lunar serves that day, resolves every member the client and i
 libraries reference, and fails if one turns up outside that list, which means LiquidBounce
 started calling something new and needs a matching redirect here.
 
+It also checks that each member is redirected by a mixin that targets the class reading it,
+that every mixin is registered in a config, and reports references made by okhttp classes the
+client ships that the host lacks, which load unredirected.
+
 Run it locally with:
 
 ```

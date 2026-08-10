@@ -115,8 +115,9 @@ def collect(jar):
     with zipfile.ZipFile(jar) as z:
         for name in z.namelist():
             if name.endswith(".class"):
-                # A class in a relocated package is the client's own copy, which the host shadows
-                # wholesale, so its internal references never resolve at runtime either way.
+                # A class in one of these packages is the client's own copy. Where the host has
+                # the same class its copy wins and the client's never loads, so its references
+                # say nothing; only the ones the host lacks are collected, by the caller.
                 if name.startswith(PKGS):
                     continue
                 try:
@@ -177,6 +178,26 @@ def main():
     refs = collect(args.client)
     provided = set(load(args.client, PKGS))
 
+    # Classes the client ships that the host does not have do load at runtime, and what they
+    # call is as able to be missing as anything else. Collect their references separately: the
+    # mod redirects the client's own call sites, not these, so they are reported not failed.
+    # Only the ones the client's own code enters through: a class nothing reaches cannot
+    # break anything, and listing every internal of a bundled okhttp buries the signal.
+    entered = {owner for owner, _n, _d in refs}
+    client_only = (provided - set(host)) & entered
+    orphan_refs = {}
+    with zipfile.ZipFile(args.client) as z:
+        for name in z.namelist():
+            if name.endswith(".jar"):
+                import io
+                inner = io.BytesIO(z.read(name))
+                with zipfile.ZipFile(inner) as iz:
+                    for entry in iz.namelist():
+                        if entry.endswith(".class") and entry[:-6] in client_only:
+                            for ref in references(iz.read(entry)):
+                                if ref[0] in host and not resolves(ref[0], ref[1:], host, set()):
+                                    orphan_refs.setdefault(ref, []).append(entry[:-6])
+
     missing = []
     for (owner, name, desc), users in sorted(refs.items()):
         if owner in provided and owner not in host:
@@ -197,6 +218,13 @@ def main():
     print(f"host okhttp/okio classes: {len(host)}")
     print(f"members referenced: {len(refs)}")
     print(f"handled by this mod: {len(covered)} member(s)")
+    if orphan_refs:
+        print(f"\nnote: {len(orphan_refs)} reference(s) from classes only the client ships, which"
+              f" load when the host lacks them and are not redirected:")
+        for (owner, name, desc), users in sorted(orphan_refs.items()):
+            print(f"  {owner}.{name}{desc}")
+            for u in sorted(set(users))[:2]:
+                print(f"      {u}")
     if not missing:
         print("\nEvery referenced member resolves against the host.")
         return 0
