@@ -45,24 +45,33 @@ jobs:
             unzip -l "$jar" | grep -qF "$want" || { echo "missing $want"; exit 1; }
           done
 
-          # Shipping an okhttp class of its own would shadow the host's and defeat the point.
-          # The mixin sits in that package too, because a companion type can only be named from
-          # inside it, so it is not a shadow.
-          # Subpackages and inner classes count too, so match the whole namespace and allow
-          # only the companions and the mixin that has to sit beside them.
+          # Shipping any other okhttp class would shadow the host's and defeat the point.
+          # Subpackages and inner classes count too, so match the whole namespace.
           shipped=$(unzip -l "$jar" | awk '$4 ~ /^(okhttp3|okio)\// && $4 ~ /\.class$/ {print $4}' \
             | grep -vE '^okhttp3/(Headers|HttpUrl|MediaType|RequestBody|MultipartBody\$Part)\$Companion\.class$' \
-            | grep -vE '^okhttp3/MixinLiquidBounceCompanions\.class$' || true)
+            || true)
           [ -z "$shipped" ] || { echo "would shadow the host's okhttp: $shipped"; exit 1; }
 
-          for cls in lbcompat/mixin/MixinAuthlibHttpUtils.class \
-                     lbcompat/mixin/MixinAuthlibRequestBody.class; do
-            unzip -l "$jar" | grep -qF "$cls" || { echo "missing $cls"; exit 1; }
-          done
-
-          for cfg in fabric.mod.json lbcompat.mixins.json lbcompat-okhttp.mixins.json; do
+          for cfg in fabric.mod.json lbcompat.mixins.json; do
             unzip -l "$jar" | grep -qF "$cfg" || { echo "missing $cfg"; exit 1; }
           done
+
+          # Read the mixins out of the config rather than naming them here, so that moving or
+          # adding one cannot leave this step asserting a layout the mod has left behind.
+          unzip -p "$jar" lbcompat.mixins.json > mixins.json
+          pkg=$(python3 -c 'import json; print(json.load(open("mixins.json"))["package"])')
+          # Mixin refuses to load anything in a package it has been handed a config for, so a
+          # mixin under okhttp3 would take the host's okhttp down with it.
+          case "$pkg" in
+            okhttp3|okhttp3.*|okio|okio.*) echo "mixin package $pkg would break the host"; exit 1 ;;
+          esac
+          python3 -c 'import json; d = json.load(open("mixins.json")); print("\n".join(d.get("mixins", []) + d.get("client", [])))' \
+            | while read -r m; do
+                [ -n "$m" ] || continue
+                want="${pkg//.//}/${m//.//}.class"
+                unzip -l "$jar" | grep -qF "$want" \
+                  || { echo "config names $m but the jar has no $want"; exit 1; }
+              done
           echo "jar looks right:"
           unzip -l "$jar" | awk '$4 ~ /\.(class|json)$/ {print "  " $4}'
 
