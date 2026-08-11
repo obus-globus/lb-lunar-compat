@@ -47,9 +47,20 @@ jobs:
           path: liquidbounce
           submodules: recursive
 
+      # Jitpack times out often enough to matter, and gradle disables the whole repository for
+      # the rest of the build when it does, so one flake takes out every dependency it serves.
       - name: Build LiquidBounce
+        id: lbbuild
         working-directory: liquidbounce
-        run: ./gradlew jar --no-daemon
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            ./gradlew jar --no-daemon && exit 0
+            echo "build attempt $attempt failed"
+            sleep 30
+          done
+          echo "failed=true" >> "$GITHUB_OUTPUT"
+          exit 1
 
       - name: Fetch the okhttp Lunar bundles
         id: lunar
@@ -80,20 +91,29 @@ jobs:
           MC_VERSION: ${{ inputs.mc_version || '26.2' }}
         run: |
           jar=$(ls -t liquidbounce/build/libs/liquidbounce-*.jar | grep -v sources | head -1)
+          # Globbed rather than listed, so moving or adding a mixin cannot leave this checking
+          # a layout the mod has left behind.
+          configs=()
+          for cfg in src/main/resources/*.mixins.json; do configs+=(--config "$cfg"); done
+          [ ${#configs[@]} -gt 0 ] || { echo "no mixin config found"; exit 2; }
+          sources=(src/main/java/lbcompat/mixin/*.java)
+          [ -e "${sources[0]}" ] || { echo "no mixin sources found"; exit 2; }
           python3 tools/check_mixin_targets.py --client "$jar" --covered covered-members.txt \
-            --config src/main/resources/lbcompat.mixins.json \
-            --config src/main/resources/lbcompat-okhttp.mixins.json \
-            src/main/java/okhttp3/MixinLiquidBounceCompanions.java \
-            src/main/java/lbcompat/mixin/*.java | tee -a report.txt
+            "${configs[@]}" "${sources[@]}" | tee -a report.txt
 
       - name: Put the report on the run page
         if: always()
         shell: bash
+        env:
+          LB_BUILD_FAILED: ${{ steps.lbbuild.outputs.failed }}
         run: |
           {
             echo "## LiquidBounce against the okhttp Lunar bundles"
             echo
-            if [ -s report.txt ]; then
+            if [ "$LB_BUILD_FAILED" = "true" ]; then
+              echo "LiquidBounce did not build after 3 attempts, so nothing was checked."
+              echo "This says nothing about compatibility either way."
+            elif [ -s report.txt ]; then
               echo '```'
               cat report.txt
               echo '```'
@@ -114,14 +134,20 @@ jobs:
         if: failure()
         env:
           WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          LB_BUILD_FAILED: ${{ steps.lbbuild.outputs.failed }}
         shell: bash
         run: |
           [ -n "$WEBHOOK" ] || { echo "no webhook configured, nothing to send"; exit 0; }
           python3 - <<'PY' | curl -fsS -X POST -H 'Content-Type: application/json' -d @- "$WEBHOOK" > /dev/null
           import json, os
+          # A build that never produced a jar says nothing about compatibility, so it should not
+          # read like a call site moved.
+          if os.environ.get("LB_BUILD_FAILED") == "true":
+              what = "could not build LiquidBounce, so nothing was checked"
+          else:
+              what = "found something that no longer resolves against Lunar's okhttp"
           print(json.dumps({"content":
-              f"**{os.environ['GITHUB_WORKFLOW']}** failed on "
-              f"{os.environ['GITHUB_REPOSITORY']}\n"
+              f"**{os.environ['GITHUB_WORKFLOW']}** {what}\n"
               f"<https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/"
               f"{os.environ['GITHUB_RUN_ID']}>"}))
           PY
