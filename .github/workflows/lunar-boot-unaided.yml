@@ -45,8 +45,8 @@ jobs:
           submodules: recursive
 
       - name: Build LiquidBounce
-        working-directory: liquidbounce
-        run: ./gradlew jar --no-daemon
+        id: lbbuild
+        run: ./tools/build-liquidbounce.sh liquidbounce
 
       - name: Boot Lunar with LiquidBounce alone
         shell: bash

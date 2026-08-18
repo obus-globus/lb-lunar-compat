@@ -47,20 +47,9 @@ jobs:
           path: liquidbounce
           submodules: recursive
 
-      # Jitpack times out often enough to matter, and gradle disables the whole repository for
-      # the rest of the build when it does, so one flake takes out every dependency it serves.
       - name: Build LiquidBounce
         id: lbbuild
-        working-directory: liquidbounce
-        shell: bash
-        run: |
-          for attempt in 1 2 3; do
-            ./gradlew jar --no-daemon && exit 0
-            echo "build attempt $attempt failed"
-            sleep 30
-          done
-          echo "failed=true" >> "$GITHUB_OUTPUT"
-          exit 1
+        run: ./tools/build-liquidbounce.sh liquidbounce
 
       - name: Fetch the okhttp Lunar bundles
         id: lunar

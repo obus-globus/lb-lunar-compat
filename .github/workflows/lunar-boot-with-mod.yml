@@ -50,8 +50,8 @@ jobs:
           submodules: recursive
 
       - name: Build LiquidBounce
-        working-directory: liquidbounce
-        run: ./gradlew jar --no-daemon
+        id: lbbuild
+        run: ./tools/build-liquidbounce.sh liquidbounce
 
       - name: Boot Lunar with both
         shell: bash
@@ -68,11 +68,16 @@ jobs:
       - name: Put the report on the run page
         if: always()
         shell: bash
+        env:
+          LB_BUILD_FAILED: ${{ steps.lbbuild.outputs.failed }}
         run: |
           {
             echo "## Lunar runtime"
             echo
-            if [ -s lunar-runtime-compat.txt ]; then
+            if [ "$LB_BUILD_FAILED" = "true" ]; then
+              echo "LiquidBounce did not build, so Lunar was never booted."
+              echo "This says nothing about compatibility either way."
+            elif [ -s lunar-runtime-compat.txt ]; then
               echo '```'
               cat lunar-runtime-compat.txt
               echo '```'
@@ -92,14 +97,20 @@ jobs:
         if: failure()
         env:
           WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          LB_BUILD_FAILED: ${{ steps.lbbuild.outputs.failed }}
         shell: bash
         run: |
           [ -n "$WEBHOOK" ] || { echo "no webhook configured, nothing to send"; exit 0; }
           python3 - <<'PY' | curl -fsS -X POST -H 'Content-Type: application/json' -d @- "$WEBHOOK" > /dev/null
           import json, os
+          # A run that never booted says nothing about compatibility, so it should not read like
+          # the mod broke on Lunar.
+          if os.environ.get("LB_BUILD_FAILED") == "true":
+              what = "could not build LiquidBounce, so Lunar was never booted"
+          else:
+              what = "booted Lunar and hit a failure"
           print(json.dumps({"content":
-              f"**{os.environ['GITHUB_WORKFLOW']}** failed on "
-              f"{os.environ['GITHUB_REPOSITORY']}\n"
+              f"**{os.environ['GITHUB_WORKFLOW']}** {what}\n"
               f"<https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/"
               f"{os.environ['GITHUB_RUN_ID']}>"}))
           PY
