@@ -52,9 +52,9 @@ jobs:
           MC_VERSION: ${{ inputs.mc_version || '26.2' }}
         run: ./tools/fetch-lunar-okhttp.sh "$MC_VERSION" lunar-okhttp.jar
 
-      # Run without --covered, so nothing this mod handles is subtracted. Failing is the normal
-      # outcome, which is exactly why the outcome is recorded: a run that failed for some other
-      # reason would otherwise be indistinguishable from the expected one.
+      # Run without --covered, so nothing is subtracted and every member that would not resolve
+      # is listed. Failing is the normal outcome, which is exactly why the outcome is recorded: a
+      # run that failed for some other reason would otherwise look the same as the expected one.
       - name: Resolve a stock LiquidBounce against it
         id: unaided
         shell: bash
@@ -81,9 +81,9 @@ jobs:
             if [ "$LB_BUILD_FAILED" = "true" ]; then
               echo "LiquidBounce did not build, so nothing was checked."
             elif [ "$RC" = "1" ]; then
-              echo "Members below do not resolve without this mod. That is the expected result."
+              echo "Every member below would fail to resolve on Lunar. That is the expected result."
             elif [ "$RC" = "0" ]; then
-              echo "Nothing failed to resolve, so Lunar no longer needs this mod for okhttp."
+              echo "Nothing failed to resolve, so Lunar and LiquidBounce now agree on okhttp."
             else
               echo "The check could not run."
             fi

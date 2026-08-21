@@ -229,14 +229,24 @@ def main():
 
     print(f"host okhttp/okio classes: {len(host)}")
     print(f"members referenced: {len(refs)}")
-    print(f"handled by this mod: {len(covered)} member(s)")
-    if orphan_refs:
-        print(f"\nnote: {len(orphan_refs)} reference(s) from classes only the client ships, which"
-              f" load when the host lacks them and are not redirected:")
-        for (owner, name, desc), users in sorted(orphan_refs.items()):
-            print(f"  {owner}.{name}{desc}")
-            for u in sorted(set(users))[:2]:
-                print(f"      {u}")
+    if args.covered:
+        # Only with --covered is anything being subtracted, and only then does it matter that
+        # these references sit where a redirect cannot reach them.
+        print(f"handled by this mod: {len(covered)} member(s)")
+        if orphan_refs:
+            print(f"\nnote: {len(orphan_refs)} reference(s) from classes only the client ships,"
+                  f" which load when the host lacks them and are not redirected:")
+            for (owner, name, desc), users in sorted(orphan_refs.items()):
+                print(f"  {owner}.{name}{desc}")
+                for u in sorted(set(users))[:2]:
+                    print(f"      {u}")
+    else:
+        # Nothing is redirecting anything, so a reference from a shipped class breaks exactly as
+        # one from the client's own code does. Report them as the single list they are.
+        for ref, users in orphan_refs.items():
+            missing.append((*ref, sorted(set(users))))
+        missing.sort()
+
     if not missing:
         print("\nEvery member the client's own classes reference resolves against the host.")
         return 0
