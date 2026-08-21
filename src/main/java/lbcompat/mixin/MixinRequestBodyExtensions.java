@@ -7,12 +7,16 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 /**
- * Copies the buffer authlib writes a json body from, through a method every okio declares.
+ * Copies the buffer a json body is written from, through a method every okio declares.
  * {@code Buffer.copy} arrived in okio 2.0, while {@code clone} exists in both.
+ *
+ * <p>The body is written on the call's own thread, so without this a request carrying one fails
+ * with a {@link NoSuchMethodError} partway through rather than at load.
  */
 @Pseudo
-@Mixin(targets = "net.ccbluex.liquidbounce.authlib.utils.HttpUtilsKt$asRequestBody$1", remap = false)
-public abstract class MixinAuthlibRequestBody {
+@Mixin(targets = "net.ccbluex.liquidbounce.api.core.RequestBodyExtensionsKt$asRequestBody$1",
+       remap = false)
+public abstract class MixinRequestBodyExtensions {
 
     @Redirect(
         method = "writeTo(Lokio/BufferedSink;)V",

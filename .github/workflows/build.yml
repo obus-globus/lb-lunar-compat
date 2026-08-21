@@ -37,8 +37,7 @@ jobs:
 
           # The companion types have to carry the exact names kotlin compiles to, or the reads
           # this mod redirects would not resolve.
-          for want in 'okhttp3/Headers$Companion.class' \
-                      'okhttp3/HttpUrl$Companion.class' \
+          for want in 'okhttp3/HttpUrl$Companion.class' \
                       'okhttp3/MediaType$Companion.class' \
                       'okhttp3/RequestBody$Companion.class' \
                       'okhttp3/MultipartBody$Part$Companion.class'; do
@@ -48,7 +47,7 @@ jobs:
           # Shipping any other okhttp class would shadow the host's and defeat the point.
           # Subpackages and inner classes count too, so match the whole namespace.
           shipped=$(unzip -l "$jar" | awk '$4 ~ /^(okhttp3|okio)\// && $4 ~ /\.class$/ {print $4}' \
-            | grep -vE '^okhttp3/(Headers|HttpUrl|MediaType|RequestBody|MultipartBody\$Part)\$Companion\.class$' \
+            | grep -vE '^okhttp3/(HttpUrl|MediaType|RequestBody|MultipartBody\$Part)\$Companion\.class$' \
             || true)
           [ -z "$shipped" ] || { echo "would shadow the host's okhttp: $shipped"; exit 1; }
 

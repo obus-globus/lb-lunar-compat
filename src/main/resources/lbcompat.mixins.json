@@ -3,14 +3,12 @@
   "package": "lbcompat.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "MixinAuthlibHttpUtils",
-    "MixinAuthlibRequestBody",
-    "MixinCompanionHeaders",
     "MixinCompanionHttpUrl",
     "MixinCompanionMediaType",
     "MixinCompanionMultipartBodyPart",
     "MixinCompanionRequestBody",
-    "MixinKotlinDefaults"
+    "MixinKotlinDefaults",
+    "MixinRequestBodyExtensions"
   ],
   "injectors": {
     "defaultRequire": 1

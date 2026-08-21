@@ -1,14 +1,14 @@
 {
   "liquidbounce": {
     "branch": "nextgen",
-    "commit": "c86714198",
-    "version": "0.39.1",
-    "note": "booted headlessly to init; the redirected reads were resolved against Lunar's okhttp rather than executed"
+    "commit": "8576dbcfd",
+    "version": "0.40.1"
   },
   "lunar": {
     "mc_version": "26.2",
     "branch": "master",
     "okhttp": "3.14.9"
   },
-  "verified_on": "2026-08-10"
+  "verified_on": "2026-08-21",
+  "note": "checked statically against a LiquidBounce built from nextgen; the redirected reads were resolved against Lunar okhttp rather than executed"
 }

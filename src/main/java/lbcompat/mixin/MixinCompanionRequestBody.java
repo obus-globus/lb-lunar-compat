@@ -16,13 +16,12 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  */
 @Pseudo
 @Mixin(targets = {
-        "net.ccbluex.liquidbounce.integration.theme.Theme",
         "net.ccbluex.liquidbounce.api.core.HttpClient$MediaTypes",
         "net.ccbluex.liquidbounce.api.core.HttpClientKt",
-        "net.ccbluex.liquidbounce.api.thirdparty.translator.providers.GoogleTranslateApiKt",
+        "net.ccbluex.liquidbounce.api.core.RequestBodyExtensionsKt$asRequestBody$1",
         "net.ccbluex.liquidbounce.api.services.marketplace.MarketplaceApi",
+        "net.ccbluex.liquidbounce.api.thirdparty.translator.providers.GoogleTranslateApiKt",
         "net.ccbluex.liquidbounce.features.module.modules.render.ModuleSkinChanger$Mode$File",
-        "net.ccbluex.liquidbounce.authlib.utils.HttpUtils",
     }, remap = false)
 public abstract class MixinCompanionRequestBody {
 

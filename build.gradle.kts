@@ -19,7 +19,7 @@ dependencies {
 
 java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
 
-version = "0.1.1"
+version = "0.2.0"
 
 // What the mod was last checked against, so a downloaded jar can say so itself.
 val testedAgainst = groovy.json.JsonSlurper()

@@ -17,7 +17,7 @@ on:
     - cron: '30 7 * * *'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   check:
@@ -94,6 +94,35 @@ jobs:
               echo '```'
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # The badge says whether LiquidBounce still needs this mod at all, which is the one thing
+      # this workflow knows and its pass/fail cannot express: failing is the normal state.
+      - name: Say in the badge whether the mod is still needed
+        if: always() && steps.lbbuild.outputs.failed != 'true' && github.event_name != 'pull_request'
+        shell: bash
+        env:
+          RC: ${{ steps.unaided.outputs.rc }}
+        run: |
+          case "$RC" in
+            0) msg=$'not needed\nbrightgreen' ;;
+            1) msg=$'needed\nblue' ;;
+            *) echo "the check did not run, leaving the badge alone"; exit 0 ;;
+          esac
+          message=$(echo "$msg" | head -1)
+          color=$(echo "$msg" | tail -1)
+          python3 - "$message" "$color" <<'PYEOF'
+          import json, sys
+          json.dump({"schemaVersion": 1, "label": "this mod",
+                     "message": sys.argv[1], "color": sys.argv[2]},
+                    open("badge/unaided.json", "w"))
+          open("badge/unaided.json", "a").write("\n")
+          PYEOF
+          git diff --quiet badge/unaided.json && { echo "badge unchanged"; exit 0; }
+          git config user.name obus-globus
+          git config user.email 254700516+obus-globus@users.noreply.github.com
+          git add badge/unaided.json
+          git commit -q -m "chore: LiquidBounce $message this mod"
+          git push -q
 
       - name: Upload the report
         if: always()

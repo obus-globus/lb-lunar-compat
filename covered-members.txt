@@ -1,11 +1,9 @@
 # Members LiquidBounce binds that Lunar's okhttp does not declare, with the classes
 # this mod redirects them for. A member reaching a class outside its list is not covered.
-okhttp3/Headers.CompanionLokhttp3/Headers$Companion; <- net/ccbluex/liquidbounce/authlib/utils/HttpUtils, net/ccbluex/liquidbounce/integration/theme/Theme
-okhttp3/Headers.EMPTYLokhttp3/Headers; <- net/ccbluex/liquidbounce/authlib/utils/HttpUtils
 okhttp3/HttpUrl.CompanionLokhttp3/HttpUrl$Companion; <- net/ccbluex/liquidbounce/api/thirdparty/translator/providers/GoogleTranslateApiKt
-okhttp3/MediaType.CompanionLokhttp3/MediaType$Companion; <- net/ccbluex/liquidbounce/api/core/HttpClient$MediaTypes, net/ccbluex/liquidbounce/authlib/utils/HttpUtils
+okhttp3/MediaType.CompanionLokhttp3/MediaType$Companion; <- net/ccbluex/liquidbounce/api/core/HttpClient$MediaTypes
 okhttp3/MultipartBody$Builder.<init>(Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V <- net/ccbluex/liquidbounce/api/services/marketplace/MarketplaceApi
 okhttp3/MultipartBody$Part.CompanionLokhttp3/MultipartBody$Part$Companion; <- net/ccbluex/liquidbounce/features/module/modules/render/ModuleSkinChanger$Mode$File
-okhttp3/RequestBody.CompanionLokhttp3/RequestBody$Companion; <- net/ccbluex/liquidbounce/api/core/HttpClientKt, net/ccbluex/liquidbounce/api/services/marketplace/MarketplaceApi, net/ccbluex/liquidbounce/authlib/utils/HttpUtils, net/ccbluex/liquidbounce/features/module/modules/render/ModuleSkinChanger$Mode$File
-okio/Buffer.copy()Lokio/Buffer; <- net/ccbluex/liquidbounce/authlib/utils/HttpUtilsKt$asRequestBody$1
+okhttp3/RequestBody.CompanionLokhttp3/RequestBody$Companion; <- net/ccbluex/liquidbounce/api/core/HttpClientKt, net/ccbluex/liquidbounce/api/services/marketplace/MarketplaceApi, net/ccbluex/liquidbounce/features/module/modules/render/ModuleSkinChanger$Mode$File
+okio/Buffer.copy()Lokio/Buffer; <- net/ccbluex/liquidbounce/api/core/RequestBodyExtensionsKt$asRequestBody$1
 okio/Okio.sink$default(Ljava/io/File;ZILjava/lang/Object;)Lokio/Sink; <- net/ccbluex/liquidbounce/api/core/HttpClientKt
