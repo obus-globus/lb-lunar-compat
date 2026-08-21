@@ -277,8 +277,13 @@ def at(locs, ref, user):
     for entry in where:
         source, _, line = entry.rpartition(":")
         files[source].append(int(line))
-    parts = [f"{source}:" + ", ".join(str(n) for n in sorted(lines))
-             for source, lines in sorted(files.items())]
+    parts = []
+    for source, lines in sorted(files.items()):
+        lines.sort()
+        shown = ", ".join(str(n) for n in lines[:8])
+        if len(lines) > 8:
+            shown += f", and {len(lines) - 8} more"
+        parts.append(f"{source}:{shown}")
     return "  (" + "; ".join(parts) + ")"
 
 
@@ -322,7 +327,13 @@ def main():
             with zipfile.ZipFile(io.BytesIO(z.read(name))) as iz:
                 for entry in iz.namelist():
                     if entry.endswith(".class") and entry[:-6] in only:
-                        bodies[entry[:-6]] = references(iz.read(entry))
+                        data = iz.read(entry)
+                        bodies[entry[:-6]] = references(data)
+                        try:
+                            for ref, where in located(data).items():
+                                locs.setdefault((ref, entry[:-6]), set()).update(where)
+                        except Exception:
+                            pass
 
     reached = {owner for owner, _n, _d in refs} & only
     queue = list(reached)
