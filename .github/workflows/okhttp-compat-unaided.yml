@@ -50,7 +50,7 @@ jobs:
       - name: Fetch the okhttp Lunar bundles
         env:
           MC_VERSION: ${{ inputs.mc_version || '26.2' }}
-        run: ./tools/fetch-lunar-okhttp.sh "$MC_VERSION" lunar-okhttp.jar
+        run: ./tools/fetch-lunar-okhttp.sh "$MC_VERSION" lunar-okhttp.jar lunar.meta
 
       # Run without --covered, so nothing is subtracted and every member that would not resolve
       # is listed. Failing is the normal outcome, which is exactly why the outcome is recorded: a
@@ -77,6 +77,11 @@ jobs:
         run: |
           {
             echo "## A stock LiquidBounce against the okhttp Lunar bundles"
+            echo
+            echo '```'
+            jar=$(ls -t liquidbounce/build/libs/liquidbounce-*.jar 2>/dev/null | grep -v sources | head -1)
+            ./tools/describe-inputs.sh "$jar" lunar.meta liquidbounce || echo "inputs unknown"
+            echo '```'
             echo
             if [ "$LB_BUILD_FAILED" = "true" ]; then
               echo "LiquidBounce did not build, so nothing was checked."

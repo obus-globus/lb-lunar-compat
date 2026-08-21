@@ -55,7 +55,7 @@ jobs:
         id: lunar
         env:
           MC_VERSION: ${{ inputs.mc_version || '26.2' }}
-        run: ./tools/fetch-lunar-okhttp.sh "$MC_VERSION" lunar-okhttp.jar
+        run: ./tools/fetch-lunar-okhttp.sh "$MC_VERSION" lunar-okhttp.jar lunar.meta
 
       - name: Resolve LiquidBounce's okhttp calls against it
         shell: bash
@@ -99,6 +99,11 @@ jobs:
         run: |
           {
             echo "## LiquidBounce against the okhttp Lunar bundles"
+            echo
+            echo '```'
+            jar=$(ls -t liquidbounce/build/libs/liquidbounce-*.jar 2>/dev/null | grep -v sources | head -1)
+            ./tools/describe-inputs.sh "$jar" lunar.meta liquidbounce || echo "inputs unknown"
+            echo '```'
             echo
             if [ "$LB_BUILD_FAILED" = "true" ]; then
               echo "LiquidBounce did not build after 3 attempts, so nothing was checked."

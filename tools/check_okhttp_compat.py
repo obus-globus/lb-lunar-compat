@@ -379,21 +379,35 @@ def main():
                 print(f"  {owner}.{name}{desc}")
                 for u in sorted(set(users))[:2]:
                     print(f"      {u}{at(locs, (owner, name, desc), u)}")
-    else:
-        # Nothing is redirecting anything, so a reference from a shipped class breaks exactly as
-        # one from the client's own code does. Report them as the single list they are.
-        for ref, users in orphan_refs.items():
-            missing.append((*ref, sorted(set(users))))
-        missing.sort()
+    def show(entries):
+        for owner, name, desc, users in entries:
+            print(f"  {owner}.{name}{desc}")
+            for u in users:
+                print(f"      {u}{at(locs, (owner, name, desc), u)}")
+
+    if not args.covered:
+        # A reference from a shipped class breaks the same way, but nothing here shows it is ever
+        # reached: those classes are entered from okhttp's own code, which the host supplies its
+        # own copy of. Kept apart so the two are not read as carrying the same weight.
+        shipped = sorted((*ref, sorted(set(users))) for ref, users in orphan_refs.items())
+        if not missing and not shipped:
+            print("\nEvery member referenced resolves against the host.")
+            return 0
+        if missing:
+            print(f"\nCalled from LiquidBounce, {len(missing)} member(s) do not resolve:\n")
+            show(missing)
+        if shipped:
+            print(f"\nReached only from the okhttp and okio LiquidBounce ships, {len(shipped)}"
+                  f" member(s) do not resolve. Those classes load where the host lacks them, so\n"
+                  f"these can break too, but whether anything calls them is unconfirmed:\n")
+            show(shipped)
+        return 1
 
     if not missing:
         print("\nEvery member the client's own classes reference resolves against the host.")
         return 0
     print(f"\n{len(missing)} member(s) do not resolve:\n")
-    for owner, name, desc, users in missing:
-        print(f"  {owner}.{name}{desc}")
-        for u in users:
-            print(f"      {u}{at(locs, (owner, name, desc), u)}")
+    show(missing)
     return 1
 
 

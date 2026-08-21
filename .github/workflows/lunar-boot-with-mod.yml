@@ -74,6 +74,11 @@ jobs:
           {
             echo "## Lunar runtime"
             echo
+            echo '```'
+            jar=$(ls -t liquidbounce/build/libs/liquidbounce-*.jar 2>/dev/null | grep -v sources | head -1)
+            ./tools/describe-inputs.sh "$jar" "" liquidbounce || echo "inputs unknown"
+            echo '```'
+            echo
             if [ "$LB_BUILD_FAILED" = "true" ]; then
               echo "LiquidBounce did not build, so Lunar was never booted."
               echo "This says nothing about compatibility either way."
