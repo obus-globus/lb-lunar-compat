@@ -70,10 +70,12 @@ jobs:
           [ "$nested" -gt 0 ] || { echo "$jar has no nested libraries, nothing to check"; exit 2; }
           echo "$jar carries $nested nested library jar(s)"
           echo "checking $jar"
+          ./tools/describe-inputs.sh "$jar" lunar.meta liquidbounce | tee report.txt
+          echo | tee -a report.txt
           python3 tools/check_okhttp_compat.py \
             --client "$jar" \
             --host lunar-okhttp.jar \
-            --covered covered-members.txt | tee report.txt
+            --covered covered-members.txt | tee -a report.txt
 
       - name: Check the mixin targets still exist
         shell: bash
@@ -99,11 +101,6 @@ jobs:
         run: |
           {
             echo "## LiquidBounce against the okhttp Lunar bundles"
-            echo
-            echo '```'
-            jar=$(ls -t liquidbounce/build/libs/liquidbounce-*.jar 2>/dev/null | grep -v sources | head -1)
-            ./tools/describe-inputs.sh "$jar" lunar.meta liquidbounce || echo "inputs unknown"
-            echo '```'
             echo
             if [ "$LB_BUILD_FAILED" = "true" ]; then
               echo "LiquidBounce did not build after 3 attempts, so nothing was checked."

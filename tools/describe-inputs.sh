@@ -15,7 +15,8 @@ if [ -n "$JAR" ] && [ -f "$JAR" ]; then
     if [ -n "$CHECKOUT" ] && [ -d "$CHECKOUT/.git" ]; then
         commit="$(git -C "$CHECKOUT" rev-parse --short=9 HEAD 2>/dev/null)"
         branch="$(git -C "$CHECKOUT" rev-parse --abbrev-ref HEAD 2>/dev/null)"
-        [ -n "$commit" ] && line="$line ($branch $commit)"
+        [ "$branch" = "HEAD" ] && branch=""   # a detached checkout names no branch
+        [ -n "$commit" ] && line="$line (${branch:+$branch }$commit)"
     fi
     echo "$line"
     # The jar names carry the versions; nothing inside them states it as reliably.

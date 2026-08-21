@@ -61,8 +61,10 @@ jobs:
         run: |
           jar=$(ls -t liquidbounce/build/libs/liquidbounce-*.jar | grep -v sources | head -1)
           [ -n "$jar" ] || { echo "no LiquidBounce jar was built"; exit 2; }
+          ./tools/describe-inputs.sh "$jar" lunar.meta liquidbounce | tee report.txt
+          echo | tee -a report.txt
           set +e
-          python3 tools/check_okhttp_compat.py --client "$jar" --host lunar-okhttp.jar | tee report.txt
+          python3 tools/check_okhttp_compat.py --client "$jar" --host lunar-okhttp.jar | tee -a report.txt
           rc=${PIPESTATUS[0]}
           set -e
           echo "rc=$rc" >> "$GITHUB_OUTPUT"
@@ -77,11 +79,6 @@ jobs:
         run: |
           {
             echo "## A stock LiquidBounce against the okhttp Lunar bundles"
-            echo
-            echo '```'
-            jar=$(ls -t liquidbounce/build/libs/liquidbounce-*.jar 2>/dev/null | grep -v sources | head -1)
-            ./tools/describe-inputs.sh "$jar" lunar.meta liquidbounce || echo "inputs unknown"
-            echo '```'
             echo
             if [ "$LB_BUILD_FAILED" = "true" ]; then
               echo "LiquidBounce did not build, so nothing was checked."
