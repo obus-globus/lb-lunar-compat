@@ -35,7 +35,11 @@ jobs:
           java-version: '25'
 
       - name: Install a display for the headless run
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends xvfb
+        # Minecraft creates its window before LiquidBounce starts, and without mesa's
+        # software driver Xvfb offers no GLX visual for it, so the game never gets that far.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xvfb libgl1-mesa-dri libglx-mesa0
 
       - name: Build the mod
         run: ./gradlew jar --no-daemon

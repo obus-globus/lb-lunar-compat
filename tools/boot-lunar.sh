@@ -126,6 +126,13 @@ nosuchfield=$(awk '
     pend && NR<=pend+12 && /net\.ccbluex|liquidbounce/ { if(!hit){c++; hit=1; pend=0} }
     END{ print c+0 }' "$LOG")
 shader_fail=$(grep -acE "Couldn't compile program for pipeline liquidbounce" "$LOG")
+# A crash report whose trace runs through LiquidBounce. Lunar renders during its own init, so a
+# LiquidBounce hook can run before LiquidBounce has set itself up, and that dies here rather than
+# in its error handler. Lunar's own headless crashes carry no LiquidBounce frame and are not counted.
+lb_crash=$(awk '
+    /---- Minecraft Crash Report ----/ { pend=NR; hit=0 }
+    pend && NR<=pend+80 && /net\.ccbluex/ { if(!hit){c++; hit=1; pend=0} }
+    END{ print c+0 }' "$LOG")
 {
     echo "LiquidBounce <-> Lunar Client runtime compatibility"
     echo "MC $MC_VERSION | Lunar branch $BRANCH | launcher $LVER"
@@ -138,10 +145,11 @@ shader_fail=$(grep -acE "Couldn't compile program for pipeline liquidbounce" "$L
     echo "LiquidBounce fatal handler   : $lb_fatal"
     echo "LiquidBounce linkage errors  : $nosuchfield"
     echo "LiquidBounce shader failures : $shader_fail"
+    echo "LiquidBounce in crash report : $lb_crash"
     echo
-    if [ "$mixin_fail" -gt 0 ] || [ "$lb_fatal" -gt 0 ] || [ "$nosuchfield" -gt 0 ] || [ "$shader_fail" -gt 0 ]; then
+    if [ "$mixin_fail" -gt 0 ] || [ "$lb_fatal" -gt 0 ] || [ "$nosuchfield" -gt 0 ] || [ "$shader_fail" -gt 0 ] || [ "$lb_crash" -gt 0 ]; then
         echo "Detected incompatibilities (log excerpts):"
-        grep -anE 'InvalidInjectionException|Mixin apply failed|was not applied|NoSuchFieldError|NoSuchMethodError|NoClassDefFoundError|An error occurred!|encountered an error|Couldn.t compile program for pipeline liquidbounce' "$LOG" \
+        grep -anE 'InvalidInjectionException|Mixin apply failed|was not applied|NoSuchFieldError|NoSuchMethodError|NoClassDefFoundError|An error occurred!|encountered an error|Couldn.t compile program for pipeline liquidbounce|^Description:|^Caused by:' "$LOG" \
             | grep -v 'RealInterceptorChain.proceed' | head -25 | sed 's/^/  /'
     else
         echo "No LiquidBounce-side runtime incompatibilities detected."
@@ -175,7 +183,7 @@ fi
 
 # Fail on real LiquidBounce-side breakage. Checked before the boot guard on purpose: a mixin
 # Ichor rejects takes the boot down with it, and that is a verdict, not an environment problem.
-if [ "$lb_launched" -eq 0 ] || [ "$mixin_fail" -gt 0 ] || [ "$lb_fatal" -gt 0 ] || [ "$nosuchfield" -gt 0 ]; then
+if [ "$lb_launched" -eq 0 ] || [ "$mixin_fail" -gt 0 ] || [ "$lb_fatal" -gt 0 ] || [ "$nosuchfield" -gt 0 ] || [ "$lb_crash" -gt 0 ]; then
     echo "[runtime] FAIL: LiquidBounce broke on Lunar during init (see report)."
     exit 1
 fi
