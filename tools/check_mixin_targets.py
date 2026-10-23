@@ -16,6 +16,7 @@ MIXIN_TARGETS = re.compile(
     r'@Mixin\(\s*(?:value\s*=\s*)?(?:targets\s*=\s*)?\{?([^)]*?)\}?\s*(?:,\s*remap[^)]*)?\)', re.S
 )
 QUOTED = re.compile(r'"([^"]+)"')
+MINECRAFT = ("net.minecraft.", "com.mojang.")
 AT_FIELD = re.compile(r'target\s*=\s*"L([^;]+);([^:"]+):([^"]+)"')
 AT_METHOD = re.compile(r'target\s*=\s*"L([^;]+);([^("]+)(\([^"]*)"')
 # A NEW target names only the type it builds, where the client's bytecode names a constructor.
@@ -122,8 +123,16 @@ def main():
             problems.append(f"{path}: no @Mixin target was parsed, so nothing was checked")
         for t in targets:
             all_targets.add(t.replace(".", "/"))
+            # Minecraft's own classes are not in the client jar. A mixin into one that stops
+            # applying shows up in the boot run instead.
+            if t.startswith(MINECRAFT):
+                continue
             if t.replace(".", "/") not in present:
                 problems.append(f"{path}: @Mixin target is gone: {t}")
+        # A LiquidBounce class a mixin names by string, to load it, has to still be there
+        for name in QUOTED.findall(text):
+            if name.startswith("net.ccbluex.") and name.replace(".", "/") not in present:
+                problems.append(f"{path}: names a class that is gone: {name}")
         # An @At owner the client itself declares has to still be there
         for owner, _name, _desc in AT_FIELD.findall(text) + AT_METHOD.findall(text):
             if owner.startswith(("okhttp3/", "okio/")):
@@ -133,6 +142,9 @@ def main():
         by_source[path] = (set(t.replace(".", "/") for t in targets), redirected(text))
         print(f"{path}: {len(targets)} target(s), {len(by_source[path][1])} redirected member(s)")
         for t in targets:
+            if t.startswith(MINECRAFT):
+                print(f"   mc   {t}")
+                continue
             mark = "ok " if t.replace(".", "/") in present else "GONE"
             print(f"   {mark} {t}")
 

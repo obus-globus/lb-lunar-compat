@@ -39,6 +39,13 @@ One redirect is not a companion read: LiquidBounce copies a buffer with `Buffer.
 okio gained in 2.0, so it is sent through `clone` instead. That one runs while a request body is
 being written rather than at load, so it surfaces as a failed request, not a crash on start.
 
+One fix is not about okhttp. ModuleItemChams and its nested Lightmap group initialise each
+other, which only works when ModuleItemChams goes first, as module registration does.
+LiquidBounce's lightmap hook reads Lightmap directly, and Lunar asks for the lightmap during its
+own startup, before LiquidBounce has registered its modules, so on Lunar the game dies in init
+with an `ExceptionInInitializerError`. The mod loads ModuleItemChams at the head of
+`Lightmap.getTextureView`, ahead of that hook. Plain Fabric never reaches the bad order.
+
 No okhttp class is overwritten. The redirects rewrite LiquidBounce's own call sites, so they
 apply on any host, and the companions forward to factories a current okhttp declares too. That
 keeps the calls correct there, but the mod is only tested against Lunar, and on a host carrying
