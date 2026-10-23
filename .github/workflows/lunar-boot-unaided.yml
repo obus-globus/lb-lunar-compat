@@ -65,6 +65,9 @@ jobs:
         shell: bash
         env:
           MC_VERSION: ${{ steps.mc.outputs.version }}
+          # A known place, so the game log can be kept: the report alone cannot say why a run
+          # never got as far as LiquidBounce.
+          LUNAR_WORK: ${{ runner.temp }}/lunar
         run: |
           jar=$(ls -t liquidbounce/build/libs/liquidbounce-*.jar | grep -v sources | head -1)
           [ -n "$jar" ] || { echo "no LiquidBounce jar was built"; exit 2; }
@@ -100,7 +103,9 @@ jobs:
         if: always()
         with:
           name: lunar-boot-unaided-report
-          path: lunar-runtime-compat.txt
+          path: |
+            lunar-runtime-compat.txt
+            ${{ runner.temp }}/lunar/boot.log
           if-no-files-found: warn
 
       - name: Say so in Discord
