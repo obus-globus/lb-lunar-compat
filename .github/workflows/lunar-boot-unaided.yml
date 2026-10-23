@@ -33,11 +33,12 @@ jobs:
           java-version: '25'
 
       - name: Install a display for the headless run
-        # Minecraft creates its window before LiquidBounce starts, and without mesa's
-        # software driver Xvfb offers no GLX visual for it, so the game never gets that far.
+        # Minecraft opens its window through SDL before LiquidBounce starts, and SDL loads the
+        # glvnd EGL, OpenGL and GLES libraries and libdecor at run time. The runner image ships
+        # none of them, and without them SDL reports no matching GLX visual.
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends xvfb libgl1-mesa-dri libglx-mesa0
+          sudo apt-get install -y --no-install-recommends xvfb libegl1 libopengl0 libgles2 libdecor-0-0
 
       - name: Check out LiquidBounce
         uses: actions/checkout@v5
