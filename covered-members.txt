@@ -1,9 +1,11 @@
 # Members LiquidBounce binds that Lunar's okhttp does not declare, with the classes
 # this mod redirects them for. A member reaching a class outside its list is not covered.
-okhttp3/HttpUrl.CompanionLokhttp3/HttpUrl$Companion; <- net/ccbluex/liquidbounce/api/thirdparty/translator/providers/GoogleTranslateApiKt
+okhttp3/Credentials.basic$default(Ljava/lang/String;Ljava/lang/String;Ljava/nio/charset/Charset;ILjava/lang/Object;)Ljava/lang/String; <- net/ccbluex/liquidbounce/features/misc/proxy/Proxy
+okhttp3/HttpUrl.CompanionLokhttp3/HttpUrl$Companion; <- net/ccbluex/liquidbounce/api/thirdparty/translator/providers/GoogleTranslateApiKt, net/ccbluex/liquidbounce/features/misc/proxy/ProxyDns
 okhttp3/MediaType.CompanionLokhttp3/MediaType$Companion; <- net/ccbluex/liquidbounce/api/core/HttpClient$MediaTypes
 okhttp3/MultipartBody$Builder.<init>(Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V <- net/ccbluex/liquidbounce/api/services/marketplace/MarketplaceApi
 okhttp3/MultipartBody$Part.CompanionLokhttp3/MultipartBody$Part$Companion; <- net/ccbluex/liquidbounce/features/module/modules/render/ModuleSkinChanger$Mode$File
-okhttp3/RequestBody.CompanionLokhttp3/RequestBody$Companion; <- net/ccbluex/liquidbounce/api/core/HttpClientKt, net/ccbluex/liquidbounce/api/services/marketplace/MarketplaceApi, net/ccbluex/liquidbounce/features/module/modules/render/ModuleSkinChanger$Mode$File
+okhttp3/RequestBody.CompanionLokhttp3/RequestBody$Companion; <- net/ccbluex/liquidbounce/api/core/HttpClientKt, net/ccbluex/liquidbounce/api/services/marketplace/MarketplaceApi, net/ccbluex/liquidbounce/features/command/commands/client/marketplace/revisions/MarketplaceUploadRevisionCommand, net/ccbluex/liquidbounce/features/marketplace/autoconfig/ConfigTracker, net/ccbluex/liquidbounce/features/module/modules/render/ModuleSkinChanger$Mode$File
+okhttp3/Response.header$default(Lokhttp3/Response;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String; <- net/ccbluex/liquidbounce/features/misc/proxy/OkHttpUrlConnection
 okio/Buffer.copy()Lokio/Buffer; <- net/ccbluex/liquidbounce/api/core/RequestBodyExtensionsKt$asRequestBody$1
 okio/Okio.sink$default(Ljava/io/File;ZILjava/lang/Object;)Lokio/Sink; <- net/ccbluex/liquidbounce/api/core/HttpClientKt

@@ -13,6 +13,10 @@ public final class RequestBody$Companion {
         return RequestBody.create(contentType, content);
     }
 
+    public RequestBody create(byte[] content, MediaType contentType, int offset, int byteCount) {
+        return RequestBody.create(contentType, content, offset, byteCount);
+    }
+
     public RequestBody create(File file, MediaType contentType) {
         return RequestBody.create(contentType, file);
     }
@@ -21,5 +25,13 @@ public final class RequestBody$Companion {
     public static RequestBody create$default(RequestBody$Companion self, String content,
                                              MediaType contentType, int mask, Object marker) {
         return RequestBody.create((mask & 1) != 0 ? null : contentType, content);
+    }
+
+    /** The default argument bridge kotlin emits for {@code create(content, type, offset, count)}. */
+    public static RequestBody create$default(RequestBody$Companion self, byte[] content,
+                                             MediaType contentType, int offset, int byteCount,
+                                             int mask, Object marker) {
+        return RequestBody.create((mask & 1) != 0 ? null : contentType, content,
+                (mask & 2) != 0 ? 0 : offset, (mask & 4) != 0 ? content.length : byteCount);
     }
 }

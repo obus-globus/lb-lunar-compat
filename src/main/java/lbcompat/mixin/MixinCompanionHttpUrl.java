@@ -15,7 +15,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * needs a single import: their simple names all collide otherwise.
  */
 @Pseudo
-@Mixin(targets = "net.ccbluex.liquidbounce.api.thirdparty.translator.providers.GoogleTranslateApiKt", remap = false)
+@Mixin(targets = {
+        "net.ccbluex.liquidbounce.api.thirdparty.translator.providers.GoogleTranslateApiKt",
+        "net.ccbluex.liquidbounce.features.misc.proxy.ProxyDns",
+    }, remap = false)
 public abstract class MixinCompanionHttpUrl {
 
     @Redirect(
