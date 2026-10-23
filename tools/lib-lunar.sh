@@ -19,12 +19,10 @@ lunar_safe_token() {
     esac
 }
 
-# Repo root = two levels up from this script (.../lunar-compat/scripts/lib-lunar.sh).
-lunar_repo_root() { cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd; }
-
-# The Minecraft version LiquidBounce currently targets, read from its version catalog.
+# The Minecraft version a LiquidBounce checkout targets, read from its version catalog, so the
+# Lunar build fetched follows LiquidBounce onto a new release. Args: <liquidbounce checkout>
 detect_mc_version() {
-    local toml; toml="$(lunar_repo_root)/gradle/libs.versions.toml"
+    local toml="$1/gradle/libs.versions.toml"
     grep -E '^\s*minecraft\s*=\s*"' "$toml" | head -1 | sed -E 's/.*"([^"]+)".*/\1/'
 }
 

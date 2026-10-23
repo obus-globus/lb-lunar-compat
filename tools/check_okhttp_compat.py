@@ -287,26 +287,60 @@ def at(locs, ref, user):
     return "  (" + "; ".join(parts) + ")"
 
 
+def member_file(path):
+    """{member: {classes}} from a covered or unreached file, plus its "! <package>" guards."""
+    members, guards = {}, []
+    with open(path) as fh:
+        for line in fh:
+            line = line.split("#")[0].strip()
+            if not line:
+                continue
+            if line.startswith("!"):
+                guards.append(line[1:].strip())
+                continue
+            member, _, users = line.partition(" <- ")
+            members[member.strip()] = {u.strip() for u in users.split(",") if u.strip()}
+    return members, guards
+
+
+def own_references(jar, prefixes):
+    """{prefix: [classes]} for the jar's own classes, not its nested ones, naming a package."""
+    out = defaultdict(list)
+    with zipfile.ZipFile(jar) as z:
+        for name in z.namelist():
+            if not name.endswith(".class") or name.startswith(PKGS):
+                continue
+            try:
+                pool, _ = _pool(z.read(name))
+            except Exception:
+                continue
+            # Any string will do: a class constant, a descriptor and a signature all spell the
+            # name out, and over-reporting here only makes the guard stricter.
+            text = [v for tag, v in pool.values() if tag == "utf"]
+            for prefix in prefixes:
+                if any(prefix in t for t in text):
+                    out[prefix].append(name[:-6])
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--client", required=True, help="the LiquidBounce jar")
     ap.add_argument("--host", required=True, help="a jar holding the host's okhttp and okio")
     ap.add_argument("--covered", help="a file listing members this mod already handles")
+    ap.add_argument("--unreached", help="a file listing members nothing LiquidBounce runs reaches")
+    ap.add_argument("--mod", help="this mod's jar, whose companion types the redirects return")
     args = ap.parse_args()
 
     host = load(args.host, PKGS)
     if not host:
         print(f"no okhttp or okio classes in {args.host}", file=sys.stderr)
         return 2
-    covered = {}
-    if args.covered:
-        with open(args.covered) as fh:
-            for line in fh:
-                line = line.split("#")[0].strip()
-                if not line:
-                    continue
-                member, _, users = line.partition(" <- ")
-                covered[member.strip()] = {u.strip() for u in users.split(",") if u.strip()}
+    covered = member_file(args.covered)[0] if args.covered else {}
+    unreached, guards = member_file(args.unreached) if args.unreached else ({}, [])
+    # The companion types the redirects hand out are this mod's, so a method LiquidBounce calls
+    # on one has to be declared there: okhttp's own copy never gets used.
+    shims = load(args.mod, PKGS) if args.mod else {}
     locs = {}
     refs = collect(args.client, locs)
     provided = set(load(args.client, PKGS))
@@ -349,13 +383,21 @@ def main():
             if ref[0] in host and not resolves(ref[0], ref[1:], host, set()):
                 orphan_refs.setdefault(ref, []).append(internal)
 
-    missing = []
+    missing, unshimmed = [], []
     for (owner, name, desc), users in sorted(refs.items()):
+        if owner in shims:
+            if not resolves(owner, (name, desc), shims, set()):
+                unshimmed.append((owner, name, desc, sorted(set(users))))
+            continue
         if owner in provided and owner not in host:
             continue  # the client ships this class itself
         if resolves(owner, (name, desc), host, set()):
             continue
         key = f"{owner}.{name}{desc}"
+        # Listed as unreached for these classes only, so a new class reaching it still fails.
+        users = sorted(set(users) - unreached.get(key, set()))
+        if not users:
+            continue
         if key in covered:
             # Handled, but only for the classes the mixin actually targets. A new referencing
             # class reaches the same member through a redirect that does not apply to it.
@@ -366,8 +408,16 @@ def main():
             continue
         missing.append((owner, name, desc, sorted(set(users))))
 
+    # The unreached list holds only while LiquidBounce's own code stays out of the packages
+    # that reach those members. Once it calls into one, the list says nothing anymore.
+    guarded = own_references(args.client, guards) if guards else {}
+
     print(f"host okhttp/okio classes: {len(host)}")
     print(f"members referenced: {len(refs)}")
+    if args.unreached:
+        print(f"listed as unreached: {len(unreached)} member(s)")
+    if args.mod:
+        print(f"companion types this mod ships: {len(shims)}")
     if args.covered:
         # Only with --covered is anything being subtracted, and only then does it matter that
         # these references sit where a redirect cannot reach them.
@@ -385,12 +435,29 @@ def main():
             for u in users:
                 print(f"      {u}{at(locs, (owner, name, desc), u)}")
 
+    failed = False
+    if unshimmed:
+        failed = True
+        print(f"\n{len(unshimmed)} member(s) are called on a companion this mod ships, which does"
+              f" not declare them:\n")
+        show(unshimmed)
+    if guarded:
+        failed = True
+        print(f"\nLiquidBounce's own classes now reference a package {args.unreached} assumes"
+              f" they never reach, so its list no longer holds:\n")
+        for prefix, users in sorted(guarded.items()):
+            print(f"  {prefix}")
+            for u in sorted(users)[:8]:
+                print(f"      {u}")
+
     if not args.covered:
         # A reference from a shipped class breaks the same way, but nothing here shows it is ever
         # reached: those classes are entered from okhttp's own code, which the host supplies its
         # own copy of. Kept apart so the two are not read as carrying the same weight.
         shipped = sorted((*ref, sorted(set(users))) for ref, users in orphan_refs.items())
         if not missing and not shipped:
+            if failed:
+                return 1
             print("\nEvery member referenced resolves against the host.")
             return 0
         if missing:
@@ -404,6 +471,8 @@ def main():
         return 1
 
     if not missing:
+        if failed:
+            return 1
         print("\nEvery member the client's own classes reference resolves against the host.")
         return 0
     print(f"\n{len(missing)} member(s) do not resolve:\n")

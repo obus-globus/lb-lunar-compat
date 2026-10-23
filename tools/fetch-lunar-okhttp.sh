@@ -5,7 +5,7 @@
 # tracks whatever Lunar serves today. Only the jars are fetched; the game is never started.
 set -euo pipefail
 
-MC_VERSION="${1:-26.2}"
+MC_VERSION="${1:?a Minecraft version is required}"
 OUT="${2:-lunar-okhttp.jar}"
 # Provenance for whatever this pulled, so a report can say which Lunar build it read.
 META="${3:-${OUT}.meta}"

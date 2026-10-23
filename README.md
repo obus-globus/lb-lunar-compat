@@ -57,20 +57,30 @@ The jar lands in `build/libs/`.
 
 `covered-members.txt` lists the okhttp and okio members LiquidBounce binds that Lunar's release
 does not declare, and that this mod handles. A daily action builds LiquidBounce from nextgen,
-fetches the okhttp Lunar serves that day, resolves every member the client and its bundled
+fetches the okhttp Lunar serves that day for the Minecraft version LiquidBounce targets (read
+from its `gradle/libs.versions.toml`, so a version bump is followed without an edit), resolves every member the client and its bundled
 libraries reference, and fails if one turns up outside that list, which means LiquidBounce
 started calling something new and needs a matching redirect here.
 
 It also checks that each member is redirected by a mixin that targets the class reading it,
-that every mixin is registered in a config, and reports references made by okhttp classes the
-client ships that the host lacks, which load unredirected.
+that every mixin is registered in a config, that every method LiquidBounce calls on a companion
+is declared by the one this mod ships (the redirects hand out the mod's, never okhttp's), and
+reports references made by okhttp classes the client ships that the host lacks, which load
+unredirected.
+
+`unreached-members.txt` lists missing members that only code LiquidBounce never runs reaches,
+with the reason in the file. Each entry holds for the classes it names only, and its `!` lines
+name packages LiquidBounce's own classes must not reference, so the check fails once the
+reasoning stops holding rather than going on subtracting them.
 
 Run it locally with:
 
 ```
-./tools/fetch-lunar-okhttp.sh 26.2 lunar-okhttp.jar
+./gradlew jar
+./tools/fetch-lunar-okhttp.sh <mc version> lunar-okhttp.jar
 python3 tools/check_okhttp_compat.py --client <liquidbounce.jar> \
-    --host lunar-okhttp.jar --covered covered-members.txt
+    --host lunar-okhttp.jar --covered covered-members.txt \
+    --unreached unreached-members.txt --mod build/libs/lb-lunar-compat-*.jar
 ```
 
 ## What it was checked against
@@ -80,15 +90,15 @@ exercised on, and the build stamps them into the jar manifest, so a downloaded j
 question on its own:
 
 ```
-Tested-LiquidBounce: 0.40.1 (nextgen 8576dbcfd)
-Tested-Lunar: MC 26.2 master, okhttp 3.14.9
+Tested-LiquidBounce: 0.41.1 (nextgen f2e592106)
+Tested-Lunar: MC 26.3 master, okhttp 3.14.9
 ```
 
-Tagging a commit `v0.2.0` builds it, checks the tag against the version in the jar, and
+Tagging a commit `v0.3.0` builds it, checks the tag against the version in the jar, and
 publishes the jar with those lines in the release notes.
 
 ## Scope
 
-Written against LiquidBounce nextgen and Lunar's 26.2 build. It covers the okhttp calls
+Written against LiquidBounce nextgen and Lunar's build for the Minecraft version it targets. It covers the okhttp calls
 LiquidBounce makes today; a call it does not know about would still fail, and the class names
 it targets are LiquidBounce's own, so a rename upstream needs a matching change here.

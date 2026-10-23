@@ -1,0 +1,15 @@
+# Members Lunar's okhttp does not declare that nothing LiquidBounce runs reaches, with the
+# classes that reference them. Nothing redirects these. A class reaching one that is not listed
+# here still fails the check.
+#
+# kaml and snakeyaml-engine-kmp come in with ktor's OpenAPI support, and only parse or emit YAML
+# when an OpenAPI document is served or read. LiquidBounce does neither, which the guards below
+# hold it to: once one of its own classes names one of these packages, the check fails.
+! io/ktor/server/routing/openapi/
+! io/ktor/openapi/
+! com/charleskorn/kaml/
+! it/krzeminski/snakeyaml/
+okio/Buffer.copyTo$default(Lokio/Buffer;Lokio/Buffer;JILjava/lang/Object;)Lokio/Buffer; <- it/krzeminski/snakeyaml/engine/kmp/api/YamlUnicodeReader
+okio/BufferedSource.select(Lokio/TypedOptions;)Ljava/lang/Object; <- it/krzeminski/snakeyaml/engine/kmp/api/YamlUnicodeReader$CharEncoding$Companion
+okio/ByteString.CompanionLokio/ByteString$Companion; <- com/charleskorn/kaml/internal/OkioUtilsKt, it/krzeminski/snakeyaml/engine/kmp/api/YamlUnicodeReader$CharEncoding, it/krzeminski/snakeyaml/engine/kmp/constructor/json/ConstructYamlBinary, it/krzeminski/snakeyaml/engine/kmp/scanner/StreamReader
+okio/Options.CompanionLokio/Options$Companion; <- it/krzeminski/snakeyaml/engine/kmp/api/YamlUnicodeReader$CharEncoding$Companion

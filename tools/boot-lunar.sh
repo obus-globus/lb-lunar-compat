@@ -18,9 +18,10 @@
 # during init, BEFORE that. So we boot, wait for "Finished Lunar initialization", give a short grace
 # window, harvest the log, then stop -- and grade on the harvested log, ignoring a post-init WebOSR crash.
 #
-# Usage: run-liquidbounce.sh [MC_VERSION] [LIQUIDBOUNCE_JAR]
-#   MC_VERSION         default: detected from libs.versions.toml
-#   LIQUIDBOUNCE_JAR   default: newest build/libs/liquidbounce-*.jar (run `./gradlew jar` first)
+# Usage: boot-lunar.sh <MC_VERSION> <LIQUIDBOUNCE_JAR> [EXTRA_MOD_JAR]
+#   MC_VERSION         the one LiquidBounce targets (detect_mc_version in lib-lunar.sh reads it)
+#   LIQUIDBOUNCE_JAR   a built LiquidBounce jar
+#   EXTRA_MOD_JAR      staged next to it, e.g. this mod
 #   env LUNAR_BRANCH   default master (only master is public)
 #   env REPORT         default build/reports/lunar-runtime-compat.txt
 # Exit codes: 0 = LiquidBounce ran cleanly (shader-only issues are warnings); 1 = a real LiquidBounce-side
@@ -34,7 +35,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$HERE/lib-lunar.sh"
 ROOT="$(pwd)"
 
-MC_VERSION="${1:-26.2}"
+MC_VERSION="${1:?a Minecraft version is required}"
 LB_JAR="${2:?a LiquidBounce jar is required}"
 EXTRA_MOD="${3:-}"
 BRANCH="${LUNAR_BRANCH:-master}"

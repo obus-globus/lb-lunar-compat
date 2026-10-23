@@ -10,9 +10,8 @@ on:
   workflow_dispatch:
     inputs:
       mc_version:
-        description: 'Minecraft version'
+        description: 'Minecraft version (default: the one LiquidBounce nextgen targets)'
         required: false
-        default: '26.2'
   schedule:
     - cron: '30 7 * * *'
 
@@ -43,13 +42,27 @@ jobs:
           path: liquidbounce
           submodules: recursive
 
+      - name: Read the Minecraft version LiquidBounce targets
+        id: mc
+        shell: bash
+        env:
+          REQUESTED: ${{ inputs.mc_version }}
+        run: |
+          # Followed rather than pinned, so the Lunar build fetched moves with LiquidBounce when it
+          # takes up a new Minecraft release.
+          source tools/lib-lunar.sh
+          version="${REQUESTED:-$(detect_mc_version liquidbounce)}"
+          [ -n "$version" ] || { echo "could not read the Minecraft version LiquidBounce targets"; exit 2; }
+          echo "Minecraft $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Build LiquidBounce
         id: lbbuild
         run: ./tools/build-liquidbounce.sh liquidbounce
 
       - name: Fetch the okhttp Lunar bundles
         env:
-          MC_VERSION: ${{ inputs.mc_version || '26.2' }}
+          MC_VERSION: ${{ steps.mc.outputs.version }}
         run: ./tools/fetch-lunar-okhttp.sh "$MC_VERSION" lunar-okhttp.jar lunar.meta
 
       # Run without --covered, so nothing is subtracted and every member that would not resolve
@@ -64,7 +77,8 @@ jobs:
           ./tools/describe-inputs.sh "$jar" lunar.meta liquidbounce | tee report.txt
           echo | tee -a report.txt
           set +e
-          python3 tools/check_okhttp_compat.py --client "$jar" --host lunar-okhttp.jar | tee -a report.txt
+          python3 tools/check_okhttp_compat.py --client "$jar" --host lunar-okhttp.jar \
+            --unreached unreached-members.txt | tee -a report.txt
           rc=${PIPESTATUS[0]}
           set -e
           echo "rc=$rc" >> "$GITHUB_OUTPUT"

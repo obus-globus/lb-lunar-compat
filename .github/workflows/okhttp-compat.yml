@@ -11,9 +11,8 @@ on:
   workflow_dispatch:
     inputs:
       mc_version:
-        description: 'Minecraft version'
+        description: 'Minecraft version (default: the one LiquidBounce nextgen targets)'
         required: false
-        default: '26.2'
   schedule:
     - cron: '0 7 * * *'
 
@@ -39,6 +38,11 @@ jobs:
       - name: Lint the checks
         run: uv run ruff check tools/
 
+      # The redirects hand out this mod's companion types, so what LiquidBounce calls on them is
+      # resolved against the jar rather than against okhttp.
+      - name: Build the mod
+        run: ./gradlew jar --no-daemon
+
       - name: Check out LiquidBounce
         uses: actions/checkout@v5
         with:
@@ -47,6 +51,20 @@ jobs:
           path: liquidbounce
           submodules: recursive
 
+      - name: Read the Minecraft version LiquidBounce targets
+        id: mc
+        shell: bash
+        env:
+          REQUESTED: ${{ inputs.mc_version }}
+        run: |
+          # Followed rather than pinned, so the Lunar build fetched moves with LiquidBounce when it
+          # takes up a new Minecraft release.
+          source tools/lib-lunar.sh
+          version="${REQUESTED:-$(detect_mc_version liquidbounce)}"
+          [ -n "$version" ] || { echo "could not read the Minecraft version LiquidBounce targets"; exit 2; }
+          echo "Minecraft $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Build LiquidBounce
         id: lbbuild
         run: ./tools/build-liquidbounce.sh liquidbounce
@@ -54,13 +72,13 @@ jobs:
       - name: Fetch the okhttp Lunar bundles
         id: lunar
         env:
-          MC_VERSION: ${{ inputs.mc_version || '26.2' }}
+          MC_VERSION: ${{ steps.mc.outputs.version }}
         run: ./tools/fetch-lunar-okhttp.sh "$MC_VERSION" lunar-okhttp.jar lunar.meta
 
       - name: Resolve LiquidBounce's okhttp calls against it
         shell: bash
         env:
-          MC_VERSION: ${{ inputs.mc_version || '26.2' }}
+          MC_VERSION: ${{ steps.mc.outputs.version }}
         run: |
           jar=$(ls -t liquidbounce/build/libs/liquidbounce-*.jar | grep -v sources | head -1)
           [ -n "$jar" ] || { echo "no LiquidBounce jar was built"; exit 2; }
@@ -75,12 +93,14 @@ jobs:
           python3 tools/check_okhttp_compat.py \
             --client "$jar" \
             --host lunar-okhttp.jar \
-            --covered covered-members.txt | tee -a report.txt
+            --covered covered-members.txt \
+            --unreached unreached-members.txt \
+            --mod "$(ls build/libs/lb-lunar-compat-*.jar | head -1)" | tee -a report.txt
 
       - name: Check the mixin targets still exist
         shell: bash
         env:
-          MC_VERSION: ${{ inputs.mc_version || '26.2' }}
+          MC_VERSION: ${{ steps.mc.outputs.version }}
         run: |
           jar=$(ls -t liquidbounce/build/libs/liquidbounce-*.jar | grep -v sources | head -1)
           # Globbed rather than listed, so moving or adding a mixin cannot leave this checking
